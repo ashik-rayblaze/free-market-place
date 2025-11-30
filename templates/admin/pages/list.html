@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin - Static Pages{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-file-alt me-2"></i>Static Pages Management</h2>
+                <div>
+                    <a href="{% url 'accounts:admin_page_create' %}" class="btn btn-primary me-2">
+                        <i class="fas fa-plus me-2"></i>Create New Page
+                    </a>
+                    <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" name="search" placeholder="Search pages..." value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="status">
+                                <option value="">All Status</option>
+                                <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                                <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+                                <option value="archived" {% if status_filter == 'archived' %}selected{% endif %}>Archived</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="type">
+                                <option value="">All Types</option>
+                                <option value="about" {% if type_filter == 'about' %}selected{% endif %}>About</option>
+                                <option value="faq" {% if type_filter == 'faq' %}selected{% endif %}>FAQ</option>
+                                <option value="terms" {% if type_filter == 'terms' %}selected{% endif %}>Terms</option>
+                                <option value="privacy" {% if type_filter == 'privacy' %}selected{% endif %}>Privacy</option>
+                                <option value="contact" {% if type_filter == 'contact' %}selected{% endif %}>Contact</option>
+                                <option value="custom" {% if type_filter == 'custom' %}selected{% endif %}>Custom</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pages List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Slug</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Featured</th>
+                                    <th>Footer</th>
+                                    <th>Nav</th>
+                                    <th>Order</th>
+                                    <th>Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for page in pages %}
+                                <tr>
+                                    <td>{{ page.id }}</td>
+                                    <td><strong>{{ page.title }}</strong></td>
+                                    <td><code>{{ page.slug }}</code></td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ page.get_page_type_display }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if page.status == 'published' %}success{% elif page.status == 'draft' %}warning{% else %}secondary{% endif %}">
+                                            {{ page.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if page.is_featured %}
+                                            <i class="fas fa-check text-success"></i>
+                                        {% else %}
+                                            <i class="fas fa-times text-muted"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if page.show_in_footer %}
+                                            <i class="fas fa-check text-success"></i>
+                                        {% else %}
+                                            <i class="fas fa-times text-muted"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if page.show_in_nav %}
+                                            <i class="fas fa-check text-success"></i>
+                                        {% else %}
+                                            <i class="fas fa-times text-muted"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ page.order }}</td>
+                                    <td>{{ page.updated_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'pages:view' page.slug %}" class="btn btn-sm btn-outline-info" target="_blank">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'accounts:admin_page_edit' page.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'accounts:admin_page_delete' page.pk %}" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="11" class="text-center text-muted">No pages found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if pages.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if pages.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ pages.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">Previous</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in pages.paginator.page_range %}
+                            {% if pages.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            {% if pages.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ pages.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

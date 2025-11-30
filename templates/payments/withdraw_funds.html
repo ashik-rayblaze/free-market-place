@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Withdraw Funds - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-minus me-2"></i>Withdraw Funds
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Current Balance:</strong> ${{ wallet.balance|floatformat:2 }}
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Amount to Withdraw</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="amount" name="amount" 
+                                       step="0.01" min="0.01" max="{{ wallet.balance }}" required>
+                            </div>
+                            <div class="form-text">Maximum: ${{ wallet.balance|floatformat:2 }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="payment_method" class="form-label">Payment Method</label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="">Select a payment method</option>
+                                {% for method in payment_methods %}
+                                    <option value="{{ method.pk }}">
+                                        {{ method.get_payment_type_display }}
+                                        {% if method.card_last_four %}
+                                            - ****{{ method.card_last_four }}
+                                        {% endif %}
+                                        {% if method.is_default %} (Default){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Note:</strong> This is a dummy payment system. Withdrawals will be processed immediately for demonstration purposes.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'payments:wallet' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Wallet
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-minus me-1"></i>Withdraw Funds
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('amount');
+    const maxAmount = {{ wallet.balance }};
+    
+    amountInput.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        if (value > maxAmount) {
+            this.setCustomValidity('Amount cannot exceed your balance');
+        } else if (value <= 0) {
+            this.setCustomValidity('Amount must be greater than 0');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+</script>
+{% endblock %}

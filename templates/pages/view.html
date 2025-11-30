@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title mb-4">{{ page.title }}</h1>
+                    
+                    <div class="page-content">
+                        {{ page.content|safe }}
+                    </div>
+                    
+                    {% if page.updated_at %}
+                    <hr>
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-clock me-1"></i>
+                        Last updated: {{ page.updated_at|date:"F d, Y" }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-content {
+    line-height: 1.8;
+}
+
+.page-content h1, .page-content h2, .page-content h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.page-content p {
+    margin-bottom: 1rem;
+}
+
+.page-content ul, .page-content ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.page-content img {
+    max-width: 100%;
+    height: auto;
+}
+</style>
+{% endblock %}
+

@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ project.title }} - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Project Details -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="h2 mb-2">{{ project.title }}</h1>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-primary fs-6">{{ project.category.name }}</span>
+                                <span class="badge bg-secondary">{{ project.get_experience_level_display }}</span>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Posted {{ project.created_at|timesince }} ago
+                                </small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <h3 class="text-success mb-0">
+                                ${{ project.budget_min }}{% if project.budget_max != project.budget_min %} - ${{ project.budget_max }}{% endif %}
+                            </h3>
+                            <small class="text-muted">{{ project.budget_type|title }}</small>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Project Description</h5>
+                            <p class="text-muted">{{ project.description|linebreaks }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Required Skills</h5>
+                            <div class="mb-3">
+                                {% for skill in project.get_skills_required_list %}
+                                <span class="skill-tag">{{ skill }}</span>
+                                {% endfor %}
+                            </div>
+                            
+                            <h5>Project Timeline</h5>
+                            <p class="text-muted">
+                                <i class="fas fa-calendar me-2"></i>
+                                Due: {{ project.deadline|date:"F d, Y" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-primary">{{ project.views_count }}</h4>
+                                <small class="text-muted">Views</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-primary">{{ project.bids_count }}</h4>
+                                <small class="text-muted">Bids</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-primary">{{ project.deadline|timeuntil }}</h4>
+                                <small class="text-muted">Time Left</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Milestones -->
+            {% if milestones %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-flag-checkered me-2"></i>Project Milestones
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for milestone in milestones %}
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <h6 class="mb-1">{{ milestone.title }}</h6>
+                            <small class="text-muted">{{ milestone.description }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold text-success">${{ milestone.amount }}</span>
+                            <small class="text-muted d-block">Due: {{ milestone.due_date|date:"M d, Y" }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Bids Section -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-handshake me-2"></i>Project Bids ({{ bids.count }})
+                    </h5>
+                    {% if user.is_authenticated and user.role == 'freelancer' and not user_bid and project.can_accept_bids %}
+                    <a href="{% url 'bids:create' project.pk %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Place Bid
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if bids %}
+                        {% for bid in bids %}
+                        <div class="bid-card card mb-3 {% if bid.status == 'accepted' %}accepted{% elif bid.status == 'rejected' %}rejected{% elif bid.status == 'withdrawn' %}withdrawn{% endif %}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if bid.freelancer.profile.avatar %}
+                                        <img src="{{ bid.freelancer.profile.avatar.url }}" alt="{{ bid.freelancer.full_name }}" 
+                                             class="rounded-circle me-3" width="50" height="50">
+                                        {% else %}
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                             style="width: 50px; height: 50px;">
+                                            {{ bid.freelancer.first_name|first }}{{ bid.freelancer.last_name|first }}
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-1">{{ bid.freelancer.full_name }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-star me-1"></i>
+                                                {{ bid.freelancer.profile.average_rating|floatformat:1 }} 
+                                                ({{ bid.freelancer.profile.total_ratings }} reviews)
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-{% if bid.status == 'accepted' %}success{% elif bid.status == 'rejected' %}danger{% elif bid.status == 'withdrawn' %}secondary{% else %}primary{% endif %}">
+                                            {{ bid.get_status_display }}
+                                        </span>
+                                        <div class="mt-2">
+                                            <h5 class="text-success mb-0">${{ bid.amount }}</h5>
+                                            <small class="text-muted">{{ bid.delivery_time }} days</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-muted mb-3">{{ bid.proposal|truncatechars:200 }}</p>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ bid.created_at|timesince }} ago
+                                    </small>
+                                    <div>
+                                        <a href="{% url 'bids:detail' bid.pk %}" class="btn btn-outline-primary btn-sm me-2">
+                                            <i class="fas fa-eye me-1"></i>View Details
+                                        </a>
+                                        {% if user == project.employer and bid.status == 'pending' %}
+                                        <a href="{% url 'bids:accept' bid.pk %}" class="btn btn-success btn-sm me-2">
+                                            <i class="fas fa-check me-1"></i>Accept
+                                        </a>
+                                        <a href="{% url 'bids:reject' bid.pk %}" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-times me-1"></i>Reject
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-handshake fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No bids yet</h5>
+                        <p class="text-muted">Be the first to place a bid on this project!</p>
+                        {% if user.is_authenticated and user.role == 'freelancer' and project.can_accept_bids %}
+                        <a href="{% url 'bids:create' project.pk %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Place Bid
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Employer Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Employer
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        {% if project.employer.profile.avatar %}
+                        <img src="{{ project.employer.profile.avatar.url }}" alt="{{ project.employer.full_name }}" 
+                             class="rounded-circle me-3" width="60" height="60">
+                        {% else %}
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                             style="width: 60px; height: 60px;">
+                            {{ project.employer.first_name|first }}{{ project.employer.last_name|first }}
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-1">{{ project.employer.full_name }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-star me-1"></i>
+                                {{ project.employer.profile.average_rating|floatformat:1 }} 
+                                ({{ project.employer.profile.total_ratings }} reviews)
+                            </small>
+                        </div>
+                    </div>
+                    
+                    {% if project.employer.profile.company_name %}
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-building me-2"></i>{{ project.employer.profile.company_name }}
+                    </p>
+                    {% endif %}
+                    
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-map-marker-alt me-2"></i>{{ project.employer.profile.location|default:"Location not specified" }}
+                    </p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'messaging:start_conversation' project.employer.pk %}" class="btn btn-outline-primary">
+                            <i class="fas fa-envelope me-2"></i>Contact Employer
+                        </a>
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-user me-2"></i>View Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Project Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ project.views_count }}</h4>
+                            <small class="text-muted">Views</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ project.bids_count }}</h4>
+                            <small class="text-muted">Bids</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            {% if user.is_authenticated %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user == project.employer %}
+                        <a href="{% url 'projects:edit' project.pk %}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-edit me-2"></i>Edit Project
+                        </a>
+                        <a href="{% url 'projects:delete' project.pk %}" class="btn btn-outline-danger w-100">
+                            <i class="fas fa-trash me-2"></i>Delete Project
+                        </a>
+                    {% elif user.role == 'freelancer' %}
+                        {% if user_bid %}
+                            <a href="{% url 'bids:detail' user_bid.pk %}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-eye me-2"></i>View My Bid
+                            </a>
+                        {% elif project.can_accept_bids %}
+                            <a href="{% url 'bids:create' project.pk %}" class="btn btn-primary w-100">
+                                <i class="fas fa-handshake me-2"></i>Place Bid
+                            </a>
+                        {% else %}
+                            <button class="btn btn-secondary w-100" disabled>
+                                <i class="fas fa-lock me-2"></i>Bidding Closed
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

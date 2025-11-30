@@ -1,0 +1,214 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Freelancer Marketplace{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'accounts:home' %}">
+                <i class="fas fa-briefcase me-2"></i>FreelancerHub
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'projects:home' %}">
+                            <i class="fas fa-search me-1"></i>Find Work
+                        </a>
+                    </li>
+                    {% if nav_pages %}
+                        {% for page in nav_pages %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'pages:view' page.slug %}">
+                                {{ page.title }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                        {% if user.role == 'employer' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'projects:create' %}">
+                                    <i class="fas fa-plus me-1"></i>Post Project
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'bids:list' %}">
+                                <i class="fas fa-handshake me-1"></i>My Bids
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'messaging:list' %}">
+                                <i class="fas fa-envelope me-1"></i>Messages
+                                {% load messaging_tags %}
+                                {% get_unread_message_count user as unread_messages %}
+                                {% if unread_messages > 0 %}
+                                    <span class="badge bg-danger">{{ unread_messages }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'payments:dashboard' %}">
+                                <i class="fas fa-wallet me-1"></i>Payments
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>{{ user.first_name }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                    <i class="fas fa-user-circle me-2"></i>Profile
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'reports:notifications' %}">
+                                    <i class="fas fa-bell me-2"></i>Notifications
+                                    {% if user.notifications.all %}
+                                        <span class="badge bg-danger">{{ user.notifications.count }}</span>
+                                    {% endif %}
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:register' %}">
+                                <i class="fas fa-user-plus me-1"></i>Register
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="{% block main_class %}{% endblock %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>FreelancerHub</h5>
+                    <p>Connect with talented freelancers and find your next project. The ultimate marketplace for creative professionals.</p>
+                </div>
+                <div class="col-md-2">
+                    <h6>For Freelancers</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'projects:home' %}" class="text-light">Find Projects</a></li>
+                        <li><a href="{% url 'accounts:register' %}" class="text-light">Get Started</a></li>
+                        <li><a href="{% url 'bids:list' %}" class="text-light">My Bids</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6>For Employers</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'projects:create' %}" class="text-light">Post a Project</a></li>
+                        <li><a href="{% url 'projects:home' %}" class="text-light">Find Talent</a></li>
+                        <li><a href="{% url 'accounts:register' %}" class="text-light">Sign Up</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6>Support</h6>
+                    <ul class="list-unstyled">
+                        {% if footer_pages %}
+                            {% for page in footer_pages %}
+                                {% if page.page_type == 'help' or page.page_type == 'faq' or page.page_type == 'contact' %}
+                                <li><a href="{% url 'pages:view' page.slug %}" class="text-light">{{ page.title }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        <li><a href="{% url 'reports:create' %}" class="text-light">Report Issue</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6>Company</h6>
+                    <ul class="list-unstyled">
+                        {% if footer_pages %}
+                            {% for page in footer_pages %}
+                                {% if page.page_type == 'about' or page.page_type == 'terms' or page.page_type == 'privacy' or page.page_type == 'custom' %}
+                                <li><a href="{% url 'pages:view' page.slug %}" class="text-light">{{ page.title }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <li><a href="#" class="text-light">About Us</a></li>
+                            <li><a href="#" class="text-light">Privacy Policy</a></li>
+                            <li><a href="#" class="text-light">Terms of Service</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2025 FreelancerHub. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="#" class="text-light me-3"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-light me-3"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-light me-3"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-light"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'js/main.js' %}?v=2.0"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

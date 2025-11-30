@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messages - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-envelope me-2"></i>Messages
+                    {% if total_unread > 0 %}
+                        <span class="badge bg-danger ms-2">{{ total_unread }} unread</span>
+                    {% endif %}
+                </h2>
+                <a href="{% url 'projects:home' %}" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Find Projects
+                </a>
+            </div>
+
+            {% if conversations %}
+                <div class="row">
+                    {% for conversation in conversations %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 {% if conversation.unread_count > 0 %}border-warning{% endif %}">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        {% if conversation.project %}
+                                            <i class="fas fa-briefcase me-1"></i>
+                                            {{ conversation.project.title|truncatechars:25 }}
+                                        {% else %}
+                                            <i class="fas fa-user me-1"></i>
+                                            {% if conversation.get_other_participant %}
+                                                {{ conversation.get_other_participant.get_full_name|default:conversation.get_other_participant.username|truncatechars:25 }}
+                                            {% else %}
+                                                Unknown User
+                                            {% endif %}
+                                        {% endif %}
+                                    </h6>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge bg-primary">
+                                            {{ conversation.messages.count }} messages
+                                        </span>
+                                        {% if conversation.unread_count > 0 %}
+                                            <span class="badge bg-danger">
+                                                {{ conversation.unread_count }} unread
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ conversation.subject|truncatechars:50 }}</h6>
+                                    {% if conversation.last_message %}
+                                        <p class="text-muted small">
+                                            {{ conversation.last_message.content|truncatechars:100 }}
+                                        </p>
+                                        <div class="text-muted small">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ conversation.updated_at|timesince }} ago
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted small">No messages yet</p>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{% url 'messaging:conversation_detail' conversation.pk %}" class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="fas fa-comments me-1"></i>View Conversation
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if conversations.has_other_pages %}
+                    <nav aria-label="Conversations pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if conversations.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1">&laquo; First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ conversations.previous_page_number }}">Previous</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Page {{ conversations.number }} of {{ conversations.paginator.num_pages }}
+                                </span>
+                            </li>
+
+                            {% if conversations.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ conversations.next_page_number }}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ conversations.paginator.num_pages }}">Last &raquo;</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-envelope fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Conversations Yet</h4>
+                    <p class="text-muted">
+                        You don't have any conversations yet. Start by finding projects or connecting with other users!
+                    </p>
+                    <a href="{% url 'projects:home' %}" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Browse Projects
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.card.border-warning {
+    border-left: 4px solid #ffc107 !important;
+    background-color: #fff9e6;
+}
+
+.card.border-warning .card-header {
+    background-color: #fff3cd;
+    border-bottom: 1px solid #ffc107;
+}
+
+.badge.bg-danger {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+</style>
+{% endblock %}

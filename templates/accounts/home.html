@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - FreelancerHub{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Find Your Next Project or Hire Top Talent</h1>
+                <p class="lead mb-4">Connect with skilled freelancers and employers worldwide. Post projects, bid on jobs, and get paid securely.</p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Get Started
+                    </a>
+                    <a href="{% url 'projects:home' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-search me-2"></i>Browse Projects
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="{% static 'images/hero-illustration.svg' %}" alt="Freelancer Marketplace" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <h3 class="display-4 text-primary fw-bold">{{ total_projects|default:0 }}</h3>
+                    <p class="text-muted">Active Projects</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <h3 class="display-4 text-primary fw-bold">{{ total_freelancers|default:0 }}</h3>
+                    <p class="text-muted">Freelancers</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <h3 class="display-4 text-primary fw-bold">{{ total_employers|default:0 }}</h3>
+                    <p class="text-muted">Employers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Projects Section -->
+{% if featured_projects %}
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-center mb-5">Featured Projects</h2>
+            </div>
+        </div>
+        <div class="row">
+            {% for project in featured_projects %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-primary">{{ project.category.name }}</span>
+                            <small class="text-muted">{{ project.created_at|timesince }} ago</small>
+                        </div>
+                        <h5 class="card-title">
+                            <a href="{% url 'projects:detail' project.pk %}" class="text-decoration-none">
+                                {{ project.title|truncatechars:50 }}
+                            </a>
+                        </h5>
+                        <p class="card-text text-muted">{{ project.description|truncatechars:100 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold text-success">${{ project.budget_min }}{% if project.budget_max != project.budget_min %} - ${{ project.budget_max }}{% endif %}</span>
+                                <small class="text-muted d-block">{{ project.budget_type|title }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">{{ project.bids_count }} bids</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-primary btn-sm">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'projects:home' %}" class="btn btn-primary">View All Projects</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Recent Projects Section -->
+{% if recent_projects %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-center mb-5">Recent Projects</h2>
+            </div>
+        </div>
+        <div class="row">
+            {% for project in recent_projects %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-secondary">{{ project.category.name }}</span>
+                            <small class="text-muted">{{ project.created_at|timesince }} ago</small>
+                        </div>
+                        <h5 class="card-title">
+                            <a href="{% url 'projects:detail' project.pk %}" class="text-decoration-none">
+                                {{ project.title|truncatechars:50 }}
+                            </a>
+                        </h5>
+                        <p class="card-text text-muted">{{ project.description|truncatechars:100 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold text-success">${{ project.budget_min }}{% if project.budget_max != project.budget_min %} - ${{ project.budget_max }}{% endif %}</span>
+                                <small class="text-muted d-block">{{ project.budget_type|title }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">{{ project.bids_count }} bids</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-primary btn-sm">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'projects:home' %}" class="btn btn-primary">View All Projects</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- How It Works Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-center mb-5">How It Works</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-user-plus fa-2x"></i>
+                    </div>
+                    <h4>1. Create Account</h4>
+                    <p class="text-muted">Sign up as a freelancer or employer and create your profile.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-search fa-2x"></i>
+                    </div>
+                    <h4>2. Find Work or Talent</h4>
+                    <p class="text-muted">Browse projects or post your own to find the perfect match.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-handshake fa-2x"></i>
+                    </div>
+                    <h4>3. Collaborate & Get Paid</h4>
+                    <p class="text-muted">Work together, track progress, and get paid securely.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="mb-4">Ready to Get Started?</h2>
+                <p class="lead mb-4">Join thousands of freelancers and employers who trust FreelancerHub.</p>
+                <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-rocket me-2"></i>Start Now
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Funds - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>Add Funds to Wallet
+                    </h2>
+                    <p class="text-muted mb-0">Deposit money to your wallet using your preferred payment method.</p>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="add-funds-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="amount" class="form-label">Amount ($) *</label>
+                            <input type="number" class="form-control" id="amount" name="amount" 
+                                   min="1" max="10000" step="0.01" required placeholder="100.00">
+                            <div class="form-text">Minimum: $1.00, Maximum: $10,000.00</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="payment_method" class="form-label">Payment Method *</label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="">Select a payment method</option>
+                                {% for method in payment_methods %}
+                                <option value="{{ method.id }}">
+                                    {{ method.get_payment_type_display }}
+                                    {% if method.card_last_four %} - ****{{ method.card_last_four }}{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if not payment_methods %}
+                            <div class="form-text">
+                                <a href="{% url 'payments:add_method' %}" class="text-decoration-none">Add a payment method first</a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> This is a demo payment system. All transactions will be processed successfully for testing purposes.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'payments:dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success" {% if not payment_methods %}disabled{% endif %}>
+                                <i class="fas fa-plus me-2"></i>Add Funds
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('add-funds-form');
+    const amountInput = document.getElementById('amount');
+    const paymentMethodSelect = document.getElementById('payment_method');
+    
+    // Set default amount
+    amountInput.value = 100;
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const amount = parseFloat(amountInput.value);
+        const paymentMethod = paymentMethodSelect.value;
+        
+        if (!amount || amount < 1 || amount > 10000) {
+            e.preventDefault();
+            alert('Please enter a valid amount between $1.00 and $10,000.00');
+            return;
+        }
+        
+        if (!paymentMethod) {
+            e.preventDefault();
+            alert('Please select a payment method');
+            return;
+        }
+        
+        // Confirm the transaction
+        if (!confirm(`Are you sure you want to add $${amount.toFixed(2)} to your wallet?`)) {
+            e.preventDefault();
+        }
+    });
+    
+    // Real-time amount validation
+    amountInput.addEventListener('input', function() {
+        const amount = parseFloat(this.value);
+        
+        if (amount < 1) {
+            this.setCustomValidity('Amount must be at least $1.00');
+        } else if (amount > 10000) {
+            this.setCustomValidity('Amount cannot exceed $10,000.00');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+</script>
+{% endblock %}

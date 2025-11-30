@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payments - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">Payment Dashboard</h2>
+                            <p class="mb-0">Manage your wallet, transactions, and payment methods.</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h3 class="mb-0">${{ wallet.balance|floatformat:2 }}</h3>
+                            <small>Current Balance</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
+                    <h5>Add Funds</h5>
+                    <p class="text-muted">Deposit money to your wallet</p>
+                    <a href="{% url 'payments:add_funds' %}" class="btn btn-success">Add Funds</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-minus-circle fa-3x text-warning mb-3"></i>
+                    <h5>Withdraw</h5>
+                    <p class="text-muted">Withdraw money from your wallet</p>
+                    <a href="{% url 'payments:withdraw_funds' %}" class="btn btn-warning">Withdraw</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-credit-card fa-3x text-info mb-3"></i>
+                    <h5>Payment Methods</h5>
+                    <p class="text-muted">Manage your payment methods</p>
+                    <a href="{% url 'payments:methods' %}" class="btn btn-info">Manage</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-history fa-3x text-primary mb-3"></i>
+                    <h5>Transaction History</h5>
+                    <p class="text-muted">View all your transactions</p>
+                    <a href="{% url 'payments:transactions' %}" class="btn btn-primary">View History</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Transactions -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Transactions
+                    </h5>
+                    <a href="{% url 'payments:transactions' %}" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_transactions %}
+                        {% for transaction in recent_transactions %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <h6 class="mb-1">{{ transaction.get_transaction_type_display }}</h6>
+                                <small class="text-muted">{{ transaction.description }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold text-{% if transaction.transaction_type == 'deposit' or transaction.transaction_type == 'payment' %}success{% else %}danger{% endif %}">
+                                    {% if transaction.transaction_type == 'deposit' or transaction.transaction_type == 'payment' %}+{% else %}-{% endif %}${{ transaction.amount }}
+                                </span>
+                                <small class="text-muted d-block">{{ transaction.created_at|timesince }} ago</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No transactions yet</h6>
+                        <p class="text-muted">Your transaction history will appear here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet Info & Payment Methods -->
+        <div class="col-lg-4">
+            <!-- Wallet Balance -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-wallet me-2"></i>Wallet Balance
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="text-primary mb-3">${{ wallet.balance|floatformat:2 }}</h2>
+                    <p class="text-muted mb-3">Available Balance</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'payments:add_funds' %}" class="btn btn-success btn-sm">Add Funds</a>
+                        <a href="{% url 'payments:withdraw_funds' %}" class="btn btn-outline-warning btn-sm">Withdraw</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-credit-card me-2"></i>Payment Methods
+                    </h5>
+                    <a href="{% url 'payments:add_method' %}" class="btn btn-outline-primary btn-sm">Add</a>
+                </div>
+                <div class="card-body">
+                    {% if payment_methods %}
+                        {% for method in payment_methods %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <h6 class="mb-1">{{ method.get_payment_type_display }}</h6>
+                                {% if method.card_last_four %}
+                                <small class="text-muted">****{{ method.card_last_four }}</small>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if method.is_default %}
+                                <span class="badge bg-primary">Default</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-credit-card fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-2">No payment methods</p>
+                        <a href="{% url 'payments:add_method' %}" class="btn btn-primary btn-sm">Add Payment Method</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Escrows -->
+    {% if active_escrows %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Active Escrows
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for escrow in active_escrows %}
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <h6 class="mb-1">{{ escrow.project.title }}</h6>
+                            <small class="text-muted">
+                                {% if user.role == 'employer' %}
+                                Freelancer: {{ escrow.freelancer.full_name }}
+                                {% else %}
+                                Employer: {{ escrow.employer.full_name }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold text-success">${{ escrow.amount }}</span>
+                            <small class="text-muted d-block">{{ escrow.get_status_display }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

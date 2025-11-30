@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search Projects - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Search Filters -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'projects:search' %}">
+                        <div class="mb-3">
+                            <label for="q" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="q" name="q" value="{{ search_params.q }}" placeholder="Search projects...">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if search_params.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="budget_min" class="form-label">Min Budget ($)</label>
+                            <input type="number" class="form-control" id="budget_min" name="budget_min" value="{{ search_params.budget_min }}" min="0" step="0.01">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="budget_max" class="form-label">Max Budget ($)</label>
+                            <input type="number" class="form-control" id="budget_max" name="budget_max" value="{{ search_params.budget_max }}" min="0" step="0.01">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="experience_level" class="form-label">Experience Level</label>
+                            <select class="form-select" id="experience_level" name="experience_level">
+                                <option value="">All Levels</option>
+                                <option value="entry" {% if search_params.experience_level == 'entry' %}selected{% endif %}>Entry Level</option>
+                                <option value="intermediate" {% if search_params.experience_level == 'intermediate' %}selected{% endif %}>Intermediate</option>
+                                <option value="expert" {% if search_params.experience_level == 'expert' %}selected{% endif %}>Expert</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="skills" class="form-label">Skills</label>
+                            <input type="text" class="form-control" id="skills" name="skills" value="{{ search_params.skills }}" placeholder="e.g., Python, Django">
+                            <div class="form-text">Separate with commas</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i>Search
+                        </button>
+                        <a href="{% url 'projects:search' %}" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="fas fa-redo me-2"></i>Reset
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search Results -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>Search Results
+                        {% if search_params.q %}
+                        <span class="badge bg-primary ms-2">{{ projects.paginator.count }} found</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if projects %}
+                        <div class="row">
+                            {% for project in projects %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <a href="{% url 'projects:detail' project.pk %}" class="text-decoration-none">
+                                                {{ project.title }}
+                                            </a>
+                                        </h5>
+                                        <p class="card-text text-muted">{{ project.description|truncatewords:20 }}</p>
+                                        <div class="mb-2">
+                                            <span class="badge bg-primary">{{ project.category.name }}</span>
+                                            <span class="badge bg-secondary">{{ project.get_experience_level_display }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <i class="fas fa-dollar-sign me-1"></i>{{ project.budget_min }} - {{ project.budget_max }}
+                                            </small>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>{{ project.deadline|date:"M d" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if projects.has_other_pages %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                {% if projects.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ projects.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in projects.paginator.page_range %}
+                                {% if projects.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if projects.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ projects.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>No projects found matching your search criteria.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">Welcome back, {{ user.first_name }}!</h2>
+                            <p class="mb-0">Ready to find your next project? Browse available opportunities below.</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{% url 'projects:home' %}" class="btn btn-light">
+                                <i class="fas fa-search me-2"></i>Browse Projects
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-primary">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="stat-number">{{ my_bids.count }}</div>
+                <p class="text-muted mb-0">My Bids</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ my_bids|length }}</div>
+                <p class="text-muted mb-0">Active Bids</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number">{{ available_projects.count }}</div>
+                <p class="text-muted mb-0">Available Projects</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-info">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="stat-number">{{ recent_notifications.count }}</div>
+                <p class="text-muted mb-0">New Notifications</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- My Bids -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-handshake me-2"></i>My Recent Bids
+                    </h5>
+                    <a href="{% url 'bids:list' %}" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if my_bids %}
+                        {% for bid in my_bids %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <h6 class="mb-1">
+                                    <a href="{% url 'projects:detail' bid.project.pk %}" class="text-decoration-none">
+                                        {{ bid.project.title|truncatechars:40 }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    <i class="fas fa-dollar-sign me-1"></i>${{ bid.amount }} • 
+                                    <i class="fas fa-clock me-1"></i>{{ bid.delivery_time }} days
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{% if bid.status == 'accepted' %}success{% elif bid.status == 'rejected' %}danger{% elif bid.status == 'withdrawn' %}secondary{% else %}primary{% endif %}">
+                                    {{ bid.get_status_display }}
+                                </span>
+                                <small class="text-muted d-block">{{ bid.created_at|timesince }} ago</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-handshake fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No bids yet</h6>
+                        <p class="text-muted">Start bidding on projects to see them here.</p>
+                        <a href="{% url 'projects:home' %}" class="btn btn-primary btn-sm">Browse Projects</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Projects -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>Available Projects
+                    </h5>
+                    <a href="{% url 'projects:home' %}" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if available_projects %}
+                        {% for project in available_projects %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <h6 class="mb-1">
+                                    <a href="{% url 'projects:detail' project.pk %}" class="text-decoration-none">
+                                        {{ project.title|truncatechars:40 }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    <i class="fas fa-tag me-1"></i>{{ project.category.name }} • 
+                                    <i class="fas fa-clock me-1"></i>{{ project.deadline|timeuntil }}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold text-success">${{ project.budget_min }}{% if project.budget_max != project.budget_min %}-${{ project.budget_max }}{% endif %}</span>
+                                <small class="text-muted d-block">{{ project.bids_count }} bids</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No projects available</h6>
+                        <p class="text-muted">Check back later for new opportunities.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    {% if recent_notifications %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>Recent Notifications
+                    </h5>
+                    <a href="{% url 'reports:notifications' %}" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+                <div class="card-body">
+                    {% for notification in recent_notifications %}
+                    <div class="d-flex align-items-start py-2 border-bottom">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="fas fa-{% if notification.notification_type == 'bid_accepted' %}check-circle text-success{% elif notification.notification_type == 'bid_rejected' %}times-circle text-danger{% elif notification.notification_type == 'payment_received' %}dollar-sign text-success{% else %}bell text-primary{% endif %}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ notification.title }}</h6>
+                            <p class="text-muted mb-1">{{ notification.message|truncatechars:100 }}</p>
+                            <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                        </div>
+                        {% if not notification.is_read %}
+                        <span class="badge bg-primary">New</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'projects:home' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search me-2"></i>Find Projects
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-user-edit me-2"></i>Update Profile
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'bids:list' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-handshake me-2"></i>My Bids
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'payments:dashboard' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-wallet me-2"></i>Payments
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

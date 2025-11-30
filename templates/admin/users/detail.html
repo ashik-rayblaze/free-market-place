@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin - User Detail{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-user me-2"></i>User Details</h2>
+                <a href="{% url 'accounts:admin_users' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Users
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">User Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>ID:</strong> {{ user.id }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Username:</strong> {{ user.username }}</p>
+                    <p><strong>Full Name:</strong> {{ user.get_full_name|default:"-" }}</p>
+                    <p><strong>Role:</strong> 
+                        <span class="badge bg-{% if user.role == 'admin' %}danger{% elif user.role == 'employer' %}info{% else %}success{% endif %}">
+                            {{ user.get_role_display|default:user.role }}
+                        </span>
+                    </p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge bg-{% if user.is_active %}success{% else %}danger{% endif %}">
+                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </p>
+                    <p><strong>Verified:</strong> 
+                        <span class="badge bg-{% if user.is_verified %}success{% else %}warning{% endif %}">
+                            {% if user.is_verified %}Verified{% else %}Unverified{% endif %}
+                        </span>
+                    </p>
+                    <p><strong>Joined:</strong> {{ user.date_joined|date:"M d, Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if profile %}
+                        <p><strong>Bio:</strong> {{ profile.bio|default:"-"|truncatewords:20 }}</p>
+                        <p><strong>Location:</strong> {{ profile.location|default:"-" }}</p>
+                        <p><strong>Phone:</strong> {{ profile.phone|default:"-" }}</p>
+                        <p><strong>Website:</strong> {{ profile.website|default:"-" }}</p>
+                        {% if user.role == 'freelancer' %}
+                            <p><strong>Hourly Rate:</strong> ${{ profile.hourly_rate|default:"-" }}</p>
+                            <p><strong>Experience:</strong> {{ profile.experience_years|default:"-" }} years</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">No profile information available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Projects ({{ projects.count }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if projects %}
+                        <div class="list-group">
+                            {% for project in projects %}
+                            <a href="{% url 'projects:detail' project.pk %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ project.title }}</h6>
+                                    <small>{{ project.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <p class="mb-1 text-muted small">{{ project.description|truncatewords:10 }}</p>
+                                <small class="text-muted">
+                                    <span class="badge bg-primary">{{ project.get_status_display }}</span>
+                                </small>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No projects found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Bids ({{ bids.count }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if bids %}
+                        <div class="list-group">
+                            {% for bid in bids %}
+                            <a href="{% url 'bids:detail' bid.pk %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ bid.project.title|truncatewords:5 }}</h6>
+                                    <small>${{ bid.amount }}</small>
+                                </div>
+                                <p class="mb-1 text-muted small">{{ bid.proposal|truncatewords:10 }}</p>
+                                <small class="text-muted">
+                                    <span class="badge bg-{% if bid.status == 'accepted' %}success{% elif bid.status == 'rejected' %}danger{% else %}info{% endif %}">
+                                        {{ bid.get_status_display }}
+                                    </span>
+                                </small>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No bids found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

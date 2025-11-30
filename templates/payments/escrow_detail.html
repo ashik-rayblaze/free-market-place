@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Escrow Details - {{ project.title }} - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-shield-alt me-2"></i>Escrow Details
+                </h2>
+                <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Project
+                </a>
+            </div>
+
+            <!-- Project Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Project Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="card-title">{{ project.title }}</h6>
+                            <p class="text-muted">{{ project.description|truncatechars:200 }}</p>
+                            <div class="d-flex gap-3">
+                                <span class="badge bg-{% if project.status == 'open' %}success{% elif project.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                                    {{ project.get_status_display }}
+                                </span>
+                                <span class="badge bg-info">Budget: ${{ project.budget }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <p><strong>Employer:</strong> {{ project.employer.get_full_name }}</p>
+                            <p><strong>Created:</strong> {{ project.created_at|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escrow Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Escrow Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>Escrow Amount:</strong>
+                                <span class="h4 text-primary ms-2">${{ escrow.amount|floatformat:2 }}</span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Status:</strong>
+                                <span class="badge bg-{% if escrow.status == 'active' %}success{% elif escrow.status == 'released' %}info{% else %}danger{% endif %} ms-2">
+                                    {{ escrow.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Created:</strong>
+                                <span class="ms-2">{{ escrow.created_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>Freelancer:</strong>
+                                <span class="ms-2">{{ escrow.freelancer.get_full_name }}</span>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Last Updated:</strong>
+                                <span class="ms-2">{{ escrow.updated_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                            {% if escrow.released_at %}
+                            <div class="mb-3">
+                                <strong>Released:</strong>
+                                <span class="ms-2">{{ escrow.released_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions (for employers) -->
+            {% if project.employer == request.user and escrow.status == 'active' %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Escrow Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                                    <h6 class="card-title">Release Funds</h6>
+                                    <p class="card-text">Release the escrow funds to the freelancer when the project is completed.</p>
+                                    <a href="{% url 'payments:release_escrow' project.pk %}" class="btn btn-success">
+                                        <i class="fas fa-unlock me-1"></i>Release Funds
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-undo fa-2x text-danger mb-3"></i>
+                                    <h6 class="card-title">Refund Funds</h6>
+                                    <p class="card-text">Refund the escrow funds back to your account if needed.</p>
+                                    <a href="{% url 'payments:refund_escrow' project.pk %}" class="btn btn-danger">
+                                        <i class="fas fa-arrow-left me-1"></i>Refund Funds
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% elif escrow.freelancer == request.user %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Escrow</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> The employer will release the escrow funds to you once the project is completed and approved.
+                    </div>
+                    <p class="mb-0">
+                        <strong>Amount to be released:</strong> ${{ escrow.amount|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

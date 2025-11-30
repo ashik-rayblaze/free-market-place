@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Post Project - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-plus me-2"></i>Post a New Project
+                    </h2>
+                    <p class="text-muted mb-0">Fill out the form below to post your project and start receiving bids from talented freelancers.</p>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Basic Information</h5>
+                            
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Project Title *</label>
+                                <input type="text" class="form-control" id="title" name="title" required 
+                                       value="{% if form_data.title %}{{ form_data.title }}{% endif %}"
+                                       placeholder="e.g., Need a WordPress website for my business">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Project Description *</label>
+                                <textarea class="form-control" id="description" name="description" rows="6" required
+                                          placeholder="Describe your project in detail. What do you need? What are your goals? What should the freelancer know?">{% if form_data.description %}{{ form_data.description }}{% endif %}</textarea>
+                                <div class="form-text">Be as detailed as possible to attract the right freelancers.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category *</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select a category</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if form_data.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Budget & Timeline -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Budget & Timeline</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="budget_type" class="form-label">Budget Type *</label>
+                                    <select class="form-select" id="budget_type" name="budget_type" required>
+                                        <option value="fixed">Fixed Price</option>
+                                        <option value="hourly">Hourly Rate</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="deadline" class="form-label">Project Deadline *</label>
+                                    <input type="datetime-local" class="form-control" id="deadline" name="deadline" required
+                                           value="{% if form_data.deadline %}{{ form_data.deadline }}{% endif %}">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="budget_min" class="form-label">Minimum Budget ($) *</label>
+                                    <input type="number" class="form-control" id="budget_min" name="budget_min" 
+                                           min="1" step="0.01" required placeholder="100"
+                                           value="{% if form_data.budget_min %}{{ form_data.budget_min }}{% endif %}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="budget_max" class="form-label">Maximum Budget ($) *</label>
+                                    <input type="number" class="form-control" id="budget_max" name="budget_max" 
+                                           min="1" step="0.01" required placeholder="500"
+                                           value="{% if form_data.budget_max %}{{ form_data.budget_max }}{% endif %}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Requirements -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Requirements</h5>
+                            
+                            <div class="mb-3">
+                                <label for="skills_required" class="form-label">Required Skills *</label>
+                                <input type="text" class="form-control" id="skills_required" name="skills_required" required
+                                       value="{% if form_data.skills_required %}{{ form_data.skills_required }}{% endif %}"
+                                       placeholder="e.g., WordPress, PHP, JavaScript, UI/UX Design">
+                                <div class="form-text">Separate multiple skills with commas.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="experience_level" class="form-label">Experience Level *</label>
+                                <select class="form-select" id="experience_level" name="experience_level" required>
+                                    <option value="entry" {% if form_data.experience_level == 'entry' %}selected{% endif %}>Entry Level</option>
+                                    <option value="intermediate" {% if not form_data.experience_level or form_data.experience_level == 'intermediate' %}selected{% endif %}>Intermediate</option>
+                                    <option value="expert" {% if form_data.experience_level == 'expert' %}selected{% endif %}>Expert</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Additional Information</h5>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured">
+                                <label class="form-check-label" for="is_featured">
+                                    Feature this project (recommended for better visibility)
+                                </label>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Tips for a successful project:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Be specific about your requirements</li>
+                                    <li>Set a realistic budget range</li>
+                                    <li>Provide clear deadlines</li>
+                                    <li>Include relevant skills and experience needed</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Post Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date to today
+    const deadlineInput = document.getElementById('deadline');
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    deadlineInput.min = tomorrow.toISOString().slice(0, 16);
+    
+    // Set default deadline to 7 days from now
+    const defaultDeadline = new Date(today);
+    defaultDeadline.setDate(defaultDeadline.getDate() + 7);
+    deadlineInput.value = defaultDeadline.toISOString().slice(0, 16);
+    
+    // Budget validation
+    const budgetMin = document.getElementById('budget_min');
+    const budgetMax = document.getElementById('budget_max');
+    
+    function validateBudget() {
+        const min = parseFloat(budgetMin.value);
+        const max = parseFloat(budgetMax.value);
+        
+        if (min && max && min > max) {
+            budgetMax.setCustomValidity('Maximum budget must be greater than minimum budget');
+        } else {
+            budgetMax.setCustomValidity('');
+        }
+    }
+    
+    budgetMin.addEventListener('input', validateBudget);
+    budgetMax.addEventListener('input', validateBudget);
+    
+    // Character counter for description
+    const description = document.getElementById('description');
+    const maxLength = 2000;
+    
+    description.addEventListener('input', function() {
+        const remaining = maxLength - this.value.length;
+        let counter = document.getElementById('char-counter');
+        
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.id = 'char-counter';
+            counter.className = 'form-text';
+            description.parentNode.appendChild(counter);
+        }
+        
+        counter.textContent = `${this.value.length}/${maxLength} characters`;
+        
+        if (remaining < 100) {
+            counter.className = 'form-text text-warning';
+        } else {
+            counter.className = 'form-text';
+        }
+    });
+});
+</script>
+{% endblock %}

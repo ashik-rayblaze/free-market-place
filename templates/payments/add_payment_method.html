@@ -1,0 +1,652 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Payment Method - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-credit-card me-2"></i>Add Payment Method
+                    </h2>
+                    <p class="text-muted mb-0">Add a new payment method to your account for faster transactions.</p>
+                </div>
+                <div class="card-body" id="card-body-container">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show django-message" role="alert" data-message-id="{{ forloop.counter }}">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" id="payment-method-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="payment_type" class="form-label">Payment Type *</label>
+                            <select class="form-select" id="payment_type" name="payment_type" required>
+                                <option value="">Select payment type</option>
+                                {% for value, label in payment_types %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Card Details (shown when credit/debit card is selected) -->
+                        <div id="card-details" class="mb-4" style="display: none;">
+                            <h5 class="mb-3">Card Information</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="card_brand" class="form-label">Card Brand</label>
+                                    <select class="form-select" id="card_brand" name="card_brand">
+                                        <option value="Visa">Visa</option>
+                                        <option value="Mastercard">Mastercard</option>
+                                        <option value="American Express">American Express</option>
+                                        <option value="Discover">Discover</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="card_last_four" class="form-label">Last 4 Digits *</label>
+                                    <input type="text" class="form-control" id="card_last_four" name="card_last_four" 
+                                           maxlength="4" placeholder="1234" pattern="[0-9]{4}" title="Enter 4 digits">
+                                    <div class="form-text">Enter the last 4 digits of your card</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="expiry_month" class="form-label">Expiry Month *</label>
+                                    <select class="form-select" id="expiry_month" name="expiry_month">
+                                        <option value="">Month</option>
+                                        <option value="01">01</option>
+                                        <option value="02">02</option>
+                                        <option value="03">03</option>
+                                        <option value="04">04</option>
+                                        <option value="05">05</option>
+                                        <option value="06">06</option>
+                                        <option value="07">07</option>
+                                        <option value="08">08</option>
+                                        <option value="09">09</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="12">12</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="expiry_year" class="form-label">Expiry Year *</label>
+                                    <select class="form-select" id="expiry_year" name="expiry_year">
+                                        <option value="">Year</option>
+                                        <option value="2024">2024</option>
+                                        <option value="2025">2025</option>
+                                        <option value="2026">2026</option>
+                                        <option value="2027">2027</option>
+                                        <option value="2028">2028</option>
+                                        <option value="2029">2029</option>
+                                        <option value="2030">2030</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="cvv" class="form-label">CVV (Optional)</label>
+                                    <input type="text" class="form-control" id="cvv" name="cvv" 
+                                           maxlength="4" placeholder="123">
+                                    <div class="form-text">CVV is not stored for security reasons</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bank Transfer Details (shown when bank transfer is selected) -->
+                        <div id="bank-details" class="mb-4" style="display: none;">
+                            <h5 class="mb-3">Bank Information</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="bank_name" class="form-label">Bank Name</label>
+                                    <input type="text" class="form-control" id="bank_name" name="bank_name" 
+                                           placeholder="Your Bank Name">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="account_number" class="form-label">Account Number</label>
+                                    <input type="text" class="form-control" id="account_number" name="account_number" 
+                                           placeholder="1234567890">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="routing_number" class="form-label">Routing Number</label>
+                                    <input type="text" class="form-control" id="routing_number" name="routing_number" 
+                                           placeholder="123456789">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_default" name="is_default">
+                                <label class="form-check-label" for="is_default">
+                                    Set as default payment method
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Security Note:</strong> This is a demo system. In a real application, payment information would be securely processed through a payment gateway.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'payments:methods' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Add Payment Method
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+console.log('Template script loaded');
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded - template script');
+    
+    const paymentTypeSelect = document.getElementById('payment_type');
+    const cardDetails = document.getElementById('card-details');
+    const bankDetails = document.getElementById('bank-details');
+    var form = document.getElementById('payment-method-form'); // Changed from const to var
+    
+    console.log('Form element found?', form !== null);
+    console.log('Form ID:', form ? form.id : 'NOT FOUND');
+    console.log('Payment type select found?', paymentTypeSelect !== null);
+    console.log('Card details found?', cardDetails !== null);
+    console.log('Bank details found?', bankDetails !== null);
+    
+    // Function to handle payment type change
+    function handlePaymentTypeChange() {
+        // Re-get elements in case form was cloned
+        var currentPaymentTypeSelect = document.getElementById('payment_type');
+        var currentCardDetails = document.getElementById('card-details');
+        var currentBankDetails = document.getElementById('bank-details');
+        
+        if (!currentPaymentTypeSelect) {
+            console.error('Payment type select not found!');
+            return;
+        }
+        
+        const paymentType = currentPaymentTypeSelect.value;
+        console.log('=== PAYMENT TYPE CHANGE ===');
+        console.log('Payment type changed to:', paymentType);
+        
+        // Get card fields
+        var cardLastFour = document.getElementById('card_last_four');
+        var expiryMonth = document.getElementById('expiry_month');
+        var expiryYear = document.getElementById('expiry_year');
+        var cardBrand = document.getElementById('card_brand');
+        
+        // Get bank fields
+        var bankName = document.getElementById('bank_name');
+        var accountNumber = document.getElementById('account_number');
+        var routingNumber = document.getElementById('routing_number');
+        
+        // Hide all detail sections first
+        if (currentCardDetails) {
+            currentCardDetails.style.display = 'none';
+            console.log('Card details hidden');
+        }
+        if (currentBankDetails) {
+            currentBankDetails.style.display = 'none';
+            console.log('Bank details hidden');
+        }
+        
+        // Remove required attributes from all card fields
+        if (cardLastFour) {
+            cardLastFour.removeAttribute('required');
+            console.log('Required removed from card_last_four');
+        }
+        if (expiryMonth) {
+            expiryMonth.removeAttribute('required');
+            console.log('Required removed from expiry_month');
+        }
+        if (expiryYear) {
+            expiryYear.removeAttribute('required');
+            console.log('Required removed from expiry_year');
+        }
+        
+        // Clear field values when switching payment types
+        if (cardLastFour) cardLastFour.value = '';
+        if (expiryMonth) expiryMonth.value = '';
+        if (expiryYear) expiryYear.value = '';
+        if (cardBrand) cardBrand.value = 'Visa'; // Reset to default
+        
+        if (bankName) bankName.value = '';
+        if (accountNumber) accountNumber.value = '';
+        if (routingNumber) routingNumber.value = '';
+        
+        // Show relevant section and add required attributes
+        if (paymentType === 'credit_card' || paymentType === 'debit_card') {
+            if (currentCardDetails) {
+                currentCardDetails.style.display = 'block';
+                console.log('✅ Card details section shown');
+            } else {
+                console.error('Card details element not found!');
+            }
+            
+            // Add required attributes when card section is visible
+            if (cardLastFour) {
+                cardLastFour.setAttribute('required', 'required');
+                console.log('✅ Required added to card_last_four');
+            }
+            if (expiryMonth) {
+                expiryMonth.setAttribute('required', 'required');
+                console.log('✅ Required added to expiry_month');
+            }
+            if (expiryYear) {
+                expiryYear.setAttribute('required', 'required');
+                console.log('✅ Required added to expiry_year');
+            }
+            console.log('✅ Card details shown and required attributes added');
+        } else if (paymentType === 'bank_transfer') {
+            if (currentBankDetails) {
+                currentBankDetails.style.display = 'block';
+                console.log('✅ Bank details section shown');
+            } else {
+                console.error('Bank details element not found!');
+            }
+        } else if (paymentType === '') {
+            console.log('No payment type selected');
+        } else {
+            console.log('Other payment type selected:', paymentType);
+        }
+        console.log('=== END PAYMENT TYPE CHANGE ===');
+    }
+    
+    // Show/hide relevant fields based on payment type
+    // Use event delegation on the form to handle changes even after cloning
+    if (form) {
+        // Attach event listener to form (event delegation)
+        form.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'payment_type') {
+                console.log('Payment type change detected via event delegation');
+                handlePaymentTypeChange();
+            }
+        });
+        console.log('Event delegation listener added to form for payment_type');
+        
+        // Also attach directly to payment type select
+        if (paymentTypeSelect) {
+            paymentTypeSelect.addEventListener('change', function(e) {
+                console.log('Payment type change detected via direct listener');
+                handlePaymentTypeChange();
+            });
+            console.log('Direct change event listener added to payment type select');
+            
+            // Also trigger on input event (for better compatibility)
+            paymentTypeSelect.addEventListener('input', function(e) {
+                console.log('Payment type input detected');
+                handlePaymentTypeChange();
+            });
+            console.log('Input event listener added to payment type select');
+        }
+    }
+    
+    // Trigger change handler on page load after a short delay to ensure DOM is ready
+    setTimeout(function() {
+        var currentPaymentTypeSelect = document.getElementById('payment_type');
+        if (currentPaymentTypeSelect && currentPaymentTypeSelect.value) {
+            console.log('Payment type already selected on page load:', currentPaymentTypeSelect.value);
+            handlePaymentTypeChange();
+        } else {
+            console.log('No payment type selected on page load');
+        }
+    }, 100);
+    
+    // Add vanilla JS submit handler for validation
+    if (form) {
+        // Note: We're NOT cloning the form anymore as it removes event listeners
+        // Instead, we'll use event.stopImmediatePropagation() to prevent conflicts
+        form = document.getElementById('payment-method-form'); // Re-get form element
+        
+        // Use capture phase to ensure our handler runs first
+        form.addEventListener('submit', function(e) {
+            console.log('=== VANILLA JS FORM SUBMIT TRIGGERED ===');
+            console.log('Running validation in vanilla JS handler');
+            
+            // Get payment type - use try/catch to handle any extension interference
+            var paymentType;
+            try {
+                paymentType = document.getElementById('payment_type').value;
+            } catch (err) {
+                console.error('Error getting payment type:', err);
+                paymentType = form.querySelector('[name="payment_type"]').value;
+            }
+            var isValid = true;
+            var errorMessage = '';
+            
+            console.log('Payment type:', paymentType);
+            
+            if (!paymentType) {
+                isValid = false;
+                errorMessage = 'Please select a payment type.';
+                console.log('❌ No payment type selected');
+            } else if (paymentType === 'credit_card' || paymentType === 'debit_card') {
+                console.log('=== CARD VALIDATION START (Vanilla JS) ===');
+                
+                // Get field values with error handling for extension interference
+                var cardLastFour, expiryMonth, expiryYear;
+                try {
+                    cardLastFour = document.getElementById('card_last_four').value || '';
+                    expiryMonth = document.getElementById('expiry_month').value || '';
+                    expiryYear = document.getElementById('expiry_year').value || '';
+                } catch (err) {
+                    console.error('Error getting field values:', err);
+                    // Fallback: use form.querySelector
+                    var cardField = form.querySelector('[name="card_last_four"]');
+                    var monthField = form.querySelector('[name="expiry_month"]');
+                    var yearField = form.querySelector('[name="expiry_year"]');
+                    cardLastFour = cardField ? cardField.value || '' : '';
+                    expiryMonth = monthField ? monthField.value || '' : '';
+                    expiryYear = yearField ? yearField.value || '' : '';
+                }
+                
+                cardLastFour = cardLastFour.trim();
+                expiryMonth = expiryMonth.trim();
+                expiryYear = expiryYear.trim();
+                
+                console.log('FIELD VALUES READ:');
+                console.log('  - cardLastFour:', JSON.stringify(cardLastFour), '| length:', cardLastFour.length, '| empty?', !cardLastFour || cardLastFour.length === 0);
+                console.log('  - expiryMonth:', JSON.stringify(expiryMonth), '| length:', expiryMonth.length, '| empty?', !expiryMonth || expiryMonth.length === 0);
+                console.log('  - expiryYear:', JSON.stringify(expiryYear), '| length:', expiryYear.length, '| empty?', !expiryYear || expiryYear.length === 0);
+                
+                var missingFields = [];
+                
+                if (!cardLastFour || cardLastFour.length === 0) {
+                    missingFields.push('Last 4 Digits');
+                    console.log('  ❌ Last 4 Digits is MISSING');
+                } else {
+                    console.log('  ✅ Last 4 Digits is FILLED');
+                }
+                
+                if (!expiryMonth || expiryMonth.length === 0) {
+                    missingFields.push('Expiry Month');
+                    console.log('  ❌ Expiry Month is MISSING');
+                } else {
+                    console.log('  ✅ Expiry Month is FILLED');
+                }
+                
+                if (!expiryYear || expiryYear.length === 0) {
+                    missingFields.push('Expiry Year');
+                    console.log('  ❌ Expiry Year is MISSING');
+                } else {
+                    console.log('  ✅ Expiry Year is FILLED');
+                }
+                
+                console.log('MISSING FIELDS:', missingFields);
+                
+                if (missingFields.length > 0) {
+                    isValid = false;
+                    errorMessage = 'Please fill in all card detailssss. Missing: ' + missingFields.join(', ');
+                    console.log('❌ VALIDATION FAILED - Missing fields:', missingFields);
+                } else if (cardLastFour.length !== 4) {
+                    isValid = false;
+                    errorMessage = 'Please enter a valid 4-digit card number.';
+                    console.log('❌ VALIDATION FAILED - Card number length invalid');
+                } else if (!/^\d{4}$/.test(cardLastFour)) {
+                    isValid = false;
+                    errorMessage = 'Please enter a valid 4-digit card number (digits only).';
+                    console.log('❌ VALIDATION FAILED - Card number format invalid');
+                } else {
+                    console.log('✅ VALIDATION PASSED - All fields filled correctly');
+                }
+                console.log('=== CARD VALIDATION END ===');
+            } else if (paymentType === 'bank_transfer') {
+                var bankName = document.getElementById('bank_name').value;
+                var accountNumber = document.getElementById('account_number').value;
+                var routingNumber = document.getElementById('routing_number').value;
+                
+                if (!bankName || !accountNumber || !routingNumber) {
+                    isValid = false;
+                    errorMessage = 'Please fill in all bank details.';
+                    console.log('❌ VALIDATION FAILED - Bank details missing');
+                }
+            }
+            
+            console.log('Final validation - isValid:', isValid, 'errorMessage:', errorMessage);
+            
+            if (!isValid) {
+                console.log('❌ PREVENTING FORM SUBMISSION - Validation failed');
+                console.log('Error message to show:', errorMessage);
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (errorMessage) {
+                    console.log('Showing alert:', errorMessage);
+                    // Remove ALL existing alerts first (including from previous attempts)
+                    var allAlerts = document.querySelectorAll('.alert');
+                    console.log('Removing', allAlerts.length, 'existing alerts');
+                    allAlerts.forEach(function(alert) {
+                        alert.remove();
+                    });
+                    
+                    // Show alert using vanilla JS
+                    var alertHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 20px; margin-bottom: 20px;">' +
+                                   '<strong>' + errorMessage + '</strong>' +
+                                   '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                                   '</div>';
+                    
+                    var container = form.closest('.container');
+                    if (!container) {
+                        container = form.closest('.card-body');
+                    }
+                    if (!container) {
+                        container = document.querySelector('.container');
+                    }
+                    
+                    if (container) {
+                        container.insertAdjacentHTML('afterbegin', alertHtml);
+                        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        console.log('Alert displayed successfully');
+                    } else {
+                        console.error('Could not find container to display alert');
+                    }
+                }
+                return false;
+            } else {
+                // Validation passed - make sure NO alerts are shown
+                console.log('✅ VALIDATION PASSED - Removing ALL alerts and messages');
+                
+                // Remove ALL alerts (JavaScript-generated, Django messages, toastr, etc.)
+                var allAlerts = document.querySelectorAll('.alert, .django-message, .toast, .toastr');
+                console.log('Found', allAlerts.length, 'alerts/messages to remove');
+                allAlerts.forEach(function(alert) {
+                    console.log('Removing:', alert.textContent.trim());
+                    alert.remove();
+                });
+                
+                // Also remove any alerts that might be in the card body
+                var cardBody = document.getElementById('card-body-container');
+                if (cardBody) {
+                    var cardBodyAlerts = cardBody.querySelectorAll('.alert, .django-message, .toast, .toastr');
+                    console.log('Found', cardBodyAlerts.length, 'alerts in card body');
+                    cardBodyAlerts.forEach(function(alert) {
+                        alert.remove();
+                    });
+                }
+                
+                // Remove any toastr notifications if toastr library is loaded
+                if (typeof toastr !== 'undefined') {
+                    console.log('Clearing toastr notifications');
+                    toastr.clear();
+                }
+                
+                // Remove any Bootstrap toasts
+                var toasts = document.querySelectorAll('.toast');
+                toasts.forEach(function(toast) {
+                    var bsToast = bootstrap.Toast.getInstance(toast);
+                    if (bsToast) {
+                        bsToast.hide();
+                    }
+                    toast.remove();
+                });
+            }
+            
+            // Validation passed - ensure no alerts are shown (double check)
+            console.log('✅ VALIDATION PASSED - Final cleanup before submission');
+            
+            // Remove ALL alerts one more time (including Django messages, toastr, etc.)
+            var allAlerts = document.querySelectorAll('.alert, .django-message, .toast, .toastr, [role="alert"]');
+            if (allAlerts.length > 0) {
+                console.log('Final cleanup: Removing', allAlerts.length, 'remaining alerts');
+                allAlerts.forEach(function(alert) {
+                    console.log('Removing:', alert.textContent.trim());
+                    alert.remove();
+                });
+            } else {
+                console.log('No alerts found - page is clean');
+            }
+            
+            // Clear toastr if it exists
+            if (typeof toastr !== 'undefined') {
+                toastr.clear();
+                console.log('Cleared toastr');
+            }
+            
+            console.log('Form action:', form.action || 'current URL');
+            console.log('Form method:', form.method);
+            
+            // Clear formChanged flag if it exists (from beforeunload handler)
+            if (typeof formChanged !== 'undefined') {
+                formChanged = false;
+                console.log('Cleared formChanged flag');
+            }
+            
+            // Remove beforeunload listener to allow form submission
+            if (typeof beforeunloadHandler !== 'undefined') {
+                window.removeEventListener('beforeunload', beforeunloadHandler);
+                console.log('Removed beforeunload listener');
+            }
+            
+            // Validation passed - allow form submission
+            console.log('✅ VALIDATION PASSED - Form will submit now');
+            console.log('NOT calling preventDefault() - allowing natural form submission');
+            
+            // IMPORTANT: Make sure card details section is visible before submission
+            // Some browsers don't submit hidden fields and can't validate hidden required fields
+            if (paymentType === 'credit_card' || paymentType === 'debit_card') {
+                try {
+                    var cardDetails = document.getElementById('card-details');
+                    var cardLastFour = document.getElementById('card_last_four');
+                    var expiryMonth = document.getElementById('expiry_month');
+                    var expiryYear = document.getElementById('expiry_year');
+                    
+                    if (cardDetails) {
+                        cardDetails.style.display = 'block';
+                        console.log('Made card details section visible before submission');
+                    }
+                    
+                    // Ensure required attributes are set when section is visible
+                    if (cardLastFour) cardLastFour.setAttribute('required', 'required');
+                    if (expiryMonth) expiryMonth.setAttribute('required', 'required');
+                    if (expiryYear) expiryYear.setAttribute('required', 'required');
+                    console.log('Required attributes set on card fields');
+                } catch (err) {
+                    console.error('Error making card details visible (extension interference):', err);
+                }
+            } else {
+                // Remove required attributes from card fields if not using card payment
+                try {
+                    var cardLastFour = document.getElementById('card_last_four');
+                    var expiryMonth = document.getElementById('expiry_month');
+                    var expiryYear = document.getElementById('expiry_year');
+                    
+                    if (cardLastFour) cardLastFour.removeAttribute('required');
+                    if (expiryMonth) expiryMonth.removeAttribute('required');
+                    if (expiryYear) expiryYear.removeAttribute('required');
+                    console.log('Required attributes removed from card fields');
+                } catch (err) {
+                    console.error('Error removing required attributes:', err);
+                }
+            }
+            
+            // Final check - remove any remaining alerts/toasts
+            try {
+                document.querySelectorAll('.alert, .django-message, .toast, .toastr, [role="alert"]').forEach(function(el) {
+                    el.remove();
+                });
+            } catch (err) {
+                console.error('Error removing alerts (extension interference):', err);
+            }
+            
+            // Clear toastr if it exists
+            try {
+                if (typeof toastr !== 'undefined') {
+                    toastr.clear();
+                }
+            } catch (err) {
+                console.error('Error clearing toastr (extension interference):', err);
+            }
+            
+            // IMPORTANT: Don't call preventDefault() and don't return false
+            // The form will submit naturally - just return true
+            // The form submission will cause a page reload, which will clear any cached messages
+            console.log('Allowing form submission - returning true');
+            
+            // Stop event propagation to prevent other handlers from interfering
+            e.stopImmediatePropagation();
+            e.stopPropagation();
+            
+            // IMPORTANT: Don't prevent default - we want the form to submit
+            // But we'll also manually submit it to ensure it goes through
+            console.log('Manually submitting form...');
+            
+            // Use a very short delay to ensure all handlers have run
+            setTimeout(function() {
+                if (form && !form.dataset.submitted) {
+                    form.dataset.submitted = 'true';
+                    console.log('Calling form.submit() directly to bypass all handlers...');
+                    // Directly submit the form - this bypasses all event handlers
+                    // form.submit() doesn't trigger submit event, so it bypasses all handlers
+                    form.submit();
+                }
+            }, 10);
+            
+            // Also return true to allow natural submission
+            return true;
+        });
+    }
+    
+    // Form validation is handled by jQuery in main.js
+    // No need for duplicate submit handler here
+    
+    // Format card number input
+    document.getElementById('card_last_four').addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 4);
+    });
+    
+    // Format CVV input
+    document.getElementById('cvv').addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 4);
+    });
+    
+    // Format account number input
+    document.getElementById('account_number').addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '');
+    });
+    
+    // Format routing number input
+    document.getElementById('routing_number').addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 9);
+    });
+});
+</script>
+{% endblock %}

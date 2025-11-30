@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin - Create Static Page{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-plus me-2"></i>Create Static Page</h2>
+                <a href="{% url 'accounts:admin_pages' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Pages
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title *</label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                   value="{% if form_data.title %}{{ form_data.title }}{% endif %}"
+                                   placeholder="e.g., About Us">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">Slug *</label>
+                            <input type="text" class="form-control" id="slug" name="slug" required
+                                   value="{% if form_data.slug %}{{ form_data.slug }}{% endif %}"
+                                   placeholder="e.g., about-us">
+                            <div class="form-text">URL-friendly version (lowercase, hyphens instead of spaces)</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="page_type" class="form-label">Page Type</label>
+                                <select class="form-select" id="page_type" name="page_type">
+                                    {% for value, label in page_types %}
+                                    <option value="{{ value }}" {% if form_data.page_type == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if form_data.status == value or not form_data.status and value == 'draft' %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content *</label>
+                            <textarea class="form-control" id="content" name="content" rows="15" required
+                                      placeholder="Enter page content (HTML is allowed)">{% if form_data.content %}{{ form_data.content }}{% endif %}</textarea>
+                            <div class="form-text">You can use HTML tags for formatting</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="meta_description" class="form-label">Meta Description</label>
+                            <input type="text" class="form-control" id="meta_description" name="meta_description"
+                                   value="{% if form_data.meta_description %}{{ form_data.meta_description }}{% endif %}"
+                                   placeholder="SEO meta description">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="meta_keywords" class="form-label">Meta Keywords</label>
+                            <input type="text" class="form-control" id="meta_keywords" name="meta_keywords"
+                                   value="{% if form_data.meta_keywords %}{{ form_data.meta_keywords }}{% endif %}"
+                                   placeholder="keyword1, keyword2, keyword3">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured"
+                                           {% if form_data.is_featured %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_featured">
+                                        Featured
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="show_in_footer" name="show_in_footer"
+                                           {% if form_data.show_in_footer %}checked{% endif %}>
+                                    <label class="form-check-label" for="show_in_footer">
+                                        Show in Footer
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="show_in_nav" name="show_in_nav"
+                                           {% if form_data.show_in_nav %}checked{% endif %}>
+                                    <label class="form-check-label" for="show_in_nav">
+                                        Show in Navigation
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="order" class="form-label">Order</label>
+                            <input type="number" class="form-control" id="order" name="order"
+                                   value="{% if form_data.order %}{{ form_data.order }}{% else %}0{% endif %}"
+                                   min="0" step="1">
+                            <div class="form-text">Lower numbers appear first</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'accounts:admin_pages' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Create Page
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Help</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Page Types</h6>
+                    <ul class="small">
+                        <li><strong>About:</strong> About Us page</li>
+                        <li><strong>FAQ:</strong> Frequently Asked Questions</li>
+                        <li><strong>Terms:</strong> Terms of Service</li>
+                        <li><strong>Privacy:</strong> Privacy Policy</li>
+                        <li><strong>Contact:</strong> Contact information</li>
+                        <li><strong>Custom:</strong> Custom page</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">Tips</h6>
+                    <ul class="small">
+                        <li>Use HTML tags for formatting</li>
+                        <li>Slug should be URL-friendly</li>
+                        <li>Set order for display sequence</li>
+                        <li>Publish to make visible</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate slug from title
+    const titleInput = document.getElementById('title');
+    const slugInput = document.getElementById('slug');
+    
+    titleInput.addEventListener('input', function() {
+        if (!slugInput.value || slugInput.dataset.autoGenerated === 'true') {
+            let slug = this.value
+                .toLowerCase()
+                .trim()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/[\s_-]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            slugInput.value = slug;
+            slugInput.dataset.autoGenerated = 'true';
+        }
+    });
+    
+    slugInput.addEventListener('input', function() {
+        this.dataset.autoGenerated = 'false';
+    });
+});
+</script>
+{% endblock %}
+

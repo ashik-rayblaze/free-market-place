@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Project - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Project
+                    </h2>
+                    <p class="text-muted mb-0">Update your project details below.</p>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Basic Information</h5>
+                            
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Project Title *</label>
+                                <input type="text" class="form-control" id="title" name="title" required 
+                                       value="{{ project.title }}" placeholder="e.g., Need a WordPress website for my business">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Project Description *</label>
+                                <textarea class="form-control" id="description" name="description" rows="6" required
+                                          placeholder="Describe your project in detail.">{{ project.description }}</textarea>
+                                <div class="form-text">Be as detailed as possible to attract the right freelancers.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category *</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select a category</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if category.id == project.category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Budget & Timeline -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Budget & Timeline</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="budget_type" class="form-label">Budget Type *</label>
+                                    <select class="form-select" id="budget_type" name="budget_type" required>
+                                        <option value="fixed" {% if project.budget_type == 'fixed' %}selected{% endif %}>Fixed Price</option>
+                                        <option value="hourly" {% if project.budget_type == 'hourly' %}selected{% endif %}>Hourly Rate</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="deadline" class="form-label">Project Deadline *</label>
+                                    <input type="datetime-local" class="form-control" id="deadline" name="deadline" required
+                                           value="{{ project.deadline|date:'Y-m-d\TH:i' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="budget_min" class="form-label">Minimum Budget ($) *</label>
+                                    <input type="number" class="form-control" id="budget_min" name="budget_min" 
+                                           min="1" step="0.01" required value="{{ project.budget_min }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="budget_max" class="form-label">Maximum Budget ($) *</label>
+                                    <input type="number" class="form-control" id="budget_max" name="budget_max" 
+                                           min="1" step="0.01" required value="{{ project.budget_max }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Requirements -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Requirements</h5>
+                            
+                            <div class="mb-3">
+                                <label for="skills_required" class="form-label">Required Skills *</label>
+                                <input type="text" class="form-control" id="skills_required" name="skills_required" required
+                                       value="{{ project.skills_required }}" placeholder="e.g., WordPress, PHP, JavaScript, UI/UX Design">
+                                <div class="form-text">Separate multiple skills with commas.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="experience_level" class="form-label">Experience Level *</label>
+                                <select class="form-select" id="experience_level" name="experience_level" required>
+                                    <option value="entry" {% if project.experience_level == 'entry' %}selected{% endif %}>Entry Level</option>
+                                    <option value="intermediate" {% if project.experience_level == 'intermediate' %}selected{% endif %}>Intermediate</option>
+                                    <option value="expert" {% if project.experience_level == 'expert' %}selected{% endif %}>Expert</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Budget validation
+    const budgetMin = document.getElementById('budget_min');
+    const budgetMax = document.getElementById('budget_max');
+    
+    function validateBudget() {
+        const min = parseFloat(budgetMin.value);
+        const max = parseFloat(budgetMax.value);
+        
+        if (min && max && min > max) {
+            budgetMax.setCustomValidity('Maximum budget must be greater than minimum budget');
+        } else {
+            budgetMax.setCustomValidity('');
+        }
+    }
+    
+    budgetMin.addEventListener('input', validateBudget);
+    budgetMax.addEventListener('input', validateBudget);
+});
+</script>
+{% endblock %}
+

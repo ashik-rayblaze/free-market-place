@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Place Bid - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-handshake me-2"></i>Place Your Bid
+                    </h2>
+                    <p class="text-muted mb-0">Submit your proposal for this project.</p>
+                </div>
+                <div class="card-body">
+                    <!-- Project Summary -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ project.title }}</h5>
+                            <p class="card-text text-muted">{{ project.description|truncatechars:200 }}</p>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-tag me-1"></i>{{ project.category.name }}
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-dollar-sign me-1"></i>${{ project.budget_min }} - ${{ project.budget_max }}
+                                    </small>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>Due {{ project.deadline|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="amount" class="form-label">Your Bid Amount ($) *</label>
+                                <input type="number" class="form-control" id="amount" name="amount" 
+                                       min="{{ project.budget_min }}" max="{{ project.budget_max }}" 
+                                       step="0.01" required 
+                                       data-project-min="{{ project.budget_min }}" 
+                                       data-project-max="{{ project.budget_max }}">
+                                <div class="form-text">
+                                    Budget range: ${{ project.budget_min }} - ${{ project.budget_max }}
+                                </div>
+                                <div id="amount-feedback" class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="delivery_time" class="form-label">Delivery Time (Days) *</label>
+                                <input type="number" class="form-control" id="delivery_time" name="delivery_time" 
+                                       min="1" max="365" required placeholder="7">
+                                <div class="form-text">How many days will you need to complete this project?</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="proposal" class="form-label">Your Proposal *</label>
+                            <textarea class="form-control" id="proposal" name="proposal" rows="8" required
+                                      placeholder="Describe your approach, experience, and why you're the best fit for this project. Be specific about what you'll deliver and how you'll work with the client."></textarea>
+                            <div class="form-text">
+                                <strong>Tips for a winning proposal:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Show understanding of the project requirements</li>
+                                    <li>Highlight relevant experience and skills</li>
+                                    <li>Explain your approach and methodology</li>
+                                    <li>Include any questions or clarifications needed</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Important:</strong> Once you place a bid, you can modify or withdraw it as long as the project is still open and the deadline hasn't passed.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Project
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Bid
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('amount');
+    const deliveryTimeInput = document.getElementById('delivery_time');
+    const proposalInput = document.getElementById('proposal');
+    
+    // Set default values
+    const projectMin = parseFloat(amountInput.dataset.projectMin);
+    const projectMax = parseFloat(amountInput.dataset.projectMax);
+    amountInput.value = projectMin;
+    deliveryTimeInput.value = 7;
+    
+    // Amount validation
+    amountInput.addEventListener('input', function() {
+        const amount = parseFloat(this.value);
+        const feedback = document.getElementById('amount-feedback');
+        
+        if (amount < projectMin) {
+            this.classList.add('is-invalid');
+            feedback.textContent = `Amount must be at least $${projectMin}`;
+        } else if (amount > projectMax) {
+            this.classList.add('is-invalid');
+            feedback.textContent = `Amount must not exceed $${projectMax}`;
+        } else {
+            this.classList.remove('is-invalid');
+            feedback.textContent = '';
+        }
+    });
+    
+    // Character counter for proposal
+    proposalInput.addEventListener('input', function() {
+        const maxLength = 2000;
+        const remaining = maxLength - this.value.length;
+        let counter = document.getElementById('proposal-counter');
+        
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.id = 'proposal-counter';
+            counter.className = 'form-text';
+            this.parentNode.appendChild(counter);
+        }
+        
+        counter.textContent = `${this.value.length}/${maxLength} characters`;
+        
+        if (remaining < 200) {
+            counter.className = 'form-text text-warning';
+        } else {
+            counter.className = 'form-text';
+        }
+    });
+    
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const amount = parseFloat(amountInput.value);
+        const deliveryTime = parseInt(deliveryTimeInput.value);
+        const proposal = proposalInput.value.trim();
+        
+        if (amount < projectMin || amount > projectMax) {
+            e.preventDefault();
+            alert('Please enter a valid bid amount within the project budget range.');
+            return;
+        }
+        
+        if (deliveryTime < 1 || deliveryTime > 365) {
+            e.preventDefault();
+            alert('Please enter a valid delivery time between 1 and 365 days.');
+            return;
+        }
+        
+        if (proposal.length < 50) {
+            e.preventDefault();
+            alert('Please provide a more detailed proposal (at least 50 characters).');
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">Admin Dashboard</h2>
+                            <p class="mb-0">Welcome back, {{ user.first_name }}! Manage the platform and monitor activity.</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-light">
+                                <i class="fas fa-user me-2"></i>My Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-primary">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number">{{ total_users }}</div>
+                <p class="text-muted mb-0">Total Users</p>
+                <small class="text-muted">Freelancers: {{ freelancers }} | Employers: {{ employers }} | Admins: {{ admins }}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-success">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="stat-number">{{ total_projects }}</div>
+                <p class="text-muted mb-0">Total Projects</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-warning">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="stat-number">{{ total_bids }}</div>
+                <p class="text-muted mb-0">Total Bids</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-danger">
+                    <i class="fas fa-flag"></i>
+                </div>
+                <div class="stat-number">{{ pending_reports }}</div>
+                <p class="text-muted mb-0">Pending Reports</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Stats -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-info">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="stat-number">{{ total_transactions }}</div>
+                <p class="text-muted mb-0">Total Transactions</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="dashboard-stat">
+                <div class="stat-icon text-secondary">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="stat-number">{{ total_wallets }}</div>
+                <p class="text-muted mb-0">Total Wallets</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Menu -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Admin Management
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'accounts:admin_users' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-users me-2"></i>Users ({{ total_users }})
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'accounts:admin_projects' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-briefcase me-2"></i>Projects ({{ total_projects }})
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'accounts:admin_bids' %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-handshake me-2"></i>Bids ({{ total_bids }})
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'accounts:admin_transactions' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-exchange-alt me-2"></i>Transactions ({{ total_transactions }})
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'accounts:admin_reports' %}" class="btn btn-outline-danger w-100">
+                                <i class="fas fa-flag me-2"></i>Reports ({{ pending_reports }} pending)
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'accounts:admin_wallets' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-wallet me-2"></i>Wallets ({{ total_wallets }})
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'accounts:admin_categories' %}" class="btn btn-outline-dark w-100">
+                                <i class="fas fa-folder me-2"></i>Categories
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'accounts:admin_pages' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-file-alt me-2"></i>Static Pages ({{ total_pages }})
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'projects:home' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-briefcase me-2"></i>View Projects
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'projects:create' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-plus me-2"></i>Create Project
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'bids:list' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-handshake me-2"></i>View Bids
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'messaging:list' %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-comments me-2"></i>Messages
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Recent Projects
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_projects %}
+                        <div class="list-group list-group-flush">
+                            {% for project in recent_projects %}
+                            <a href="{% url 'projects:detail' project.pk %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ project.title|truncatewords:8 }}</h6>
+                                    <small>{{ project.created_at|timesince }} ago</small>
+                                </div>
+                                <p class="mb-1 text-muted small">{{ project.description|truncatewords:10 }}</p>
+                                <small class="text-muted">
+                                    <span class="badge bg-primary">{{ project.category.name }}</span>
+                                    <span class="badge bg-secondary">{{ project.get_experience_level_display }}</span>
+                                </small>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No recent projects</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Recent Users
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_users %}
+                        <div class="list-group list-group-flush">
+                            {% for user in recent_users %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ user.get_full_name|default:user.username }}</h6>
+                                    <small>{{ user.date_joined|timesince }} ago</small>
+                                </div>
+                                <p class="mb-1 text-muted small">
+                                    <span class="badge bg-info">{{ user.get_role_display|default:user.role }}</span>
+                                    <span class="badge bg-{% if user.is_verified %}success{% else %}warning{% endif %}">
+                                        {% if user.is_verified %}Verified{% else %}Unverified{% endif %}
+                                    </span>
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No recent users</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>System Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-2"><strong>Django Version:</strong> 4.2.7</p>
+                            <p class="mb-2"><strong>Python Version:</strong> 3.8+</p>
+                            <p class="mb-2"><strong>Database:</strong> MySQL</p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-2"><strong>Debug Mode:</strong> {{ debug|yesno:"On,Off" }}</p>
+                            <p class="mb-2"><strong>Environment:</strong> Development</p>
+                            <p class="mb-0"><strong>Last Updated:</strong> {{ now|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Platform Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h4 class="text-primary">{{ total_users }}</h4>
+                            <small class="text-muted">Users</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-success">{{ total_projects }}</h4>
+                            <small class="text-muted">Projects</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-warning">{{ total_bids }}</h4>
+                            <small class="text-muted">Bids</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
