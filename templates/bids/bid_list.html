@@ -56,7 +56,7 @@
                                     {% if user.role == 'employer' %}
                                         <div class="mb-2">
                                             <strong>Freelancer:</strong>
-                                            <a href="{% url 'accounts:profile' bid.freelancer.pk %}" class="text-decoration-none">
+                                            <a href="{% url 'accounts:user_profile' bid.freelancer.pk %}" class="text-decoration-none">
                                                 {{ bid.freelancer.get_full_name|default:bid.freelancer.username }}
                                             </a>
                                         </div>

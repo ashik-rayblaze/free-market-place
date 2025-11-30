@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+from decimal import Decimal
 import uuid
 
 User = get_user_model()
@@ -59,11 +60,15 @@ class Wallet(models.Model):
     
     def add_funds(self, amount):
         """Add funds to wallet."""
+        # Convert amount to Decimal to ensure type compatibility
+        amount = Decimal(str(amount))
         self.balance += amount
         self.save()
     
     def deduct_funds(self, amount):
         """Deduct funds from wallet."""
+        # Convert amount to Decimal to ensure type compatibility
+        amount = Decimal(str(amount))
         if self.balance >= amount:
             self.balance -= amount
             self.save()

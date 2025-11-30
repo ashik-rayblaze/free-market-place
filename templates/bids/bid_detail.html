@@ -116,7 +116,7 @@
                             <div class="card-body">
                                 <p><strong>Name:</strong> {{ bid.freelancer.get_full_name|default:bid.freelancer.username }}</p>
                                 <p><strong>Email:</strong> {{ bid.freelancer.email }}</p>
-                                <a href="{% url 'accounts:profile' bid.freelancer.pk %}" class="btn btn-outline-primary btn-sm">
+                                <a href="{% url 'accounts:user_profile' bid.freelancer.pk %}" class="btn btn-outline-primary btn-sm">
                                     View Profile
                                 </a>
                             </div>
