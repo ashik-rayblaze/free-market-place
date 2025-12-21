@@ -102,6 +102,7 @@ class Transaction(models.Model):
     
     # Related objects
     project = models.ForeignKey('projects.Project', on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
+    phase = models.ForeignKey('projects.ProjectPhase', on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
     bid = models.ForeignKey('bids.Bid', on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.SET_NULL, null=True, blank=True)
     
@@ -197,4 +198,88 @@ class Escrow(models.Model):
                 description=f"Refund for project: {self.project.title}",
                 completed_at=timezone.now()
             )
+
+
+class PhaseEscrow(models.Model):
+    """Escrow system for individual project phases."""
+    
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('released', 'Released'),
+        ('disputed', 'Disputed'),
+        ('refunded', 'Refunded'),
+    ]
+    
+    phase = models.OneToOneField('projects.ProjectPhase', on_delete=models.CASCADE, related_name='escrow')
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE, related_name='phase_escrows')
+    employer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='phase_escrows_as_employer')
+    freelancer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='phase_escrows_as_freelancer')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    released_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Phase Escrow"
+        verbose_name_plural = "Phase Escrows"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Escrow for {self.phase.name} - ${self.amount}"
+    
+    def release_funds(self):
+        """Release phase funds to freelancer."""
+        if self.status == 'active' and self.phase.can_be_paid():
+            self.status = 'released'
+            self.released_at = timezone.now()
+            self.save()
+            
+            # Update phase status to paid
+            self.phase.status = 'paid'
+            self.phase.paid_at = timezone.now()
+            self.phase.save()
+            
+            # Add funds to freelancer's wallet
+            freelancer_wallet, created = Wallet.objects.get_or_create(user=self.freelancer)
+            freelancer_wallet.add_funds(self.amount)
+            
+            # Create transaction record
+            Transaction.objects.create(
+                user=self.freelancer,
+                transaction_type='payment',
+                amount=self.amount,
+                status='completed',
+                project=self.project,
+                phase=self.phase,
+                description=f"Payment for phase: {self.phase.name} - {self.project.title}",
+                completed_at=timezone.now()
+            )
+            return True
+        return False
+    
+    def refund_funds(self):
+        """Refund phase funds to employer."""
+        if self.status == 'active':
+            self.status = 'refunded'
+            self.save()
+            
+            # Add funds back to employer's wallet
+            employer_wallet, created = Wallet.objects.get_or_create(user=self.employer)
+            employer_wallet.add_funds(self.amount)
+            
+            # Create transaction record
+            Transaction.objects.create(
+                user=self.employer,
+                transaction_type='refund',
+                amount=self.amount,
+                status='completed',
+                project=self.project,
+                phase=self.phase,
+                description=f"Refund for phase: {self.phase.name} - {self.project.title}",
+                completed_at=timezone.now()
+            )
+            return True
+        return False
 

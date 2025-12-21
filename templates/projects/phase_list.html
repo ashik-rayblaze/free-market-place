@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Project Phases - {{ project.title }} - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <i class="fas fa-tasks me-2"></i>Project Phases
+            </h2>
+            <p class="text-muted mb-0">{{ project.title }}</p>
+        </div>
+        <div>
+            {% if is_employer %}
+                <a href="{% url 'projects:phase_create' project.pk %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Create Phase
+                </a>
+            {% endif %}
+            <a href="{% url 'projects:detail' project.pk %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Project
+            </a>
+        </div>
+    </div>
+
+    <!-- Budget Summary -->
+    <div class="card mb-4">
+        <div class="card-body">
+            {% if total_allocated > project.budget_max %}
+                <div class="alert alert-danger mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Budget Exceeded!</strong> Total phase amount (${{ total_allocated|floatformat:2 }}) exceeds project budget (${{ project.budget_max|floatformat:2 }}).
+                    Please adjust phase amounts.
+                </div>
+            {% elif remaining_budget < 0 %}
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Warning:</strong> Total phase amount exceeds project budget by ${{ budget_exceeded_by|floatformat:2 }}.
+                </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <h6 class="text-muted mb-1">Project Budget</h6>
+                    <h4>${{ project.budget_max|floatformat:2 }}</h4>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="text-muted mb-1">Allocated to Phases</h6>
+                    <h4 class="{% if total_allocated > project.budget_max %}text-danger{% else %}text-primary{% endif %}">
+                        ${{ total_allocated|floatformat:2 }}
+                    </h4>
+                    {% if remaining_budget >= 0 %}
+                        <small class="text-muted">Remaining: ${{ remaining_budget|floatformat:2 }}</small>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <h6 class="text-muted mb-1">Completed Phases</h6>
+                    <h4>{{ completed_count }} / {{ phases|length }}</h4>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="text-muted mb-1">Paid Amount</h6>
+                    <h4 class="text-success">${{ paid_amount|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phases List -->
+    {% if phases %}
+        <div class="row">
+            {% for phase in phases %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 
+                        {% if phase.status == 'paid' %}border-success
+                        {% elif phase.status == 'completed' %}border-warning
+                        {% elif phase.status == 'in_progress' %}border-primary
+                        {% else %}border-secondary{% endif %}">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0">
+                                    <span class="badge bg-secondary me-2">#{{ phase.order }}</span>
+                                    {{ phase.name }}
+                                </h5>
+                            </div>
+                            <span class="badge 
+                                {% if phase.status == 'paid' %}bg-success
+                                {% elif phase.status == 'completed' %}bg-warning
+                                {% elif phase.status == 'in_progress' %}bg-primary
+                                {% else %}bg-secondary{% endif %}">
+                                {{ phase.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">{{ phase.description|truncatewords:20 }}</p>
+                            <div class="mb-3">
+                                <strong>Amount:</strong> ${{ phase.amount|floatformat:2 }}
+                            </div>
+                            
+                            {% if phase.started_at %}
+                                <small class="text-muted">
+                                    Started: {{ phase.started_at|date:"M d, Y" }}
+                                </small><br>
+                            {% endif %}
+                            {% if phase.completed_at %}
+                                <small class="text-muted">
+                                    Completed: {{ phase.completed_at|date:"M d, Y" }}
+                                </small><br>
+                            {% endif %}
+                            {% if phase.paid_at %}
+                                <small class="text-success">
+                                    Paid: {{ phase.paid_at|date:"M d, Y" }}
+                                </small>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <div class="btn-group w-100" role="group">
+                                {% if is_employer %}
+                                    <a href="{% url 'projects:phase_edit' project.pk phase.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    {% if phase.status == 'completed' and phase.payment_requested %}
+                                        {% if phase.escrow %}
+                                            <a href="{% url 'payments:phase_escrow_detail' project.pk phase.pk %}" class="btn btn-sm btn-success">
+                                                <i class="fas fa-dollar-sign"></i> Release Payment
+                                            </a>
+                                        {% else %}
+                                            <a href="{% url 'payments:phase_escrow_create' project.pk phase.pk %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-lock"></i> Create Escrow
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                {% elif is_freelancer %}
+                                    {% if phase.status == 'pending' and phase.can_start %}
+                                        <form method="post" action="{% url 'projects:phase_start' project.pk phase.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-play"></i> Start
+                                            </button>
+                                        </form>
+                                    {% elif phase.status == 'in_progress' %}
+                                        <form method="post" action="{% url 'projects:phase_complete' project.pk phase.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-check"></i> Complete
+                                            </button>
+                                        </form>
+                                    {% elif phase.status == 'completed' and not phase.payment_requested %}
+                                        <form method="post" action="{% url 'payments:phase_payment_request' project.pk phase.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-info">
+                                                <i class="fas fa-hand-holding-usd"></i> Request Payment
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No phases created yet</h5>
+                <p class="text-muted">Create phases to break down your project into manageable stages.</p>
+                {% if is_employer %}
+                    <a href="{% url 'projects:phase_create' project.pk %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Create First Phase
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

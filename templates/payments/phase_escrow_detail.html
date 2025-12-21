@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Phase Escrow - {{ phase.name }} - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i class="fas fa-shield-alt me-2"></i>Phase Escrow Details
+                    </h2>
+                    <p class="text-muted mb-0">{{ project.title }} - {{ phase.name }}</p>
+                </div>
+                <a href="{% url 'projects:phase_list' project.pk %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Phases
+                </a>
+            </div>
+
+            <!-- Phase Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Phase Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="card-title">{{ phase.name }}</h6>
+                            <p class="text-muted">{{ phase.description|truncatewords:50 }}</p>
+                            <div class="d-flex gap-3">
+                                <span class="badge 
+                                    {% if phase.status == 'paid' %}bg-success
+                                    {% elif phase.status == 'completed' %}bg-warning
+                                    {% elif phase.status == 'in_progress' %}bg-primary
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ phase.get_status_display }}
+                                </span>
+                                <span class="badge bg-info">Amount: ${{ phase.amount|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <p><strong>Order:</strong> #{{ phase.order }}</p>
+                            {% if phase.completed_at %}
+                                <p><strong>Completed:</strong> {{ phase.completed_at|date:"M d, Y" }}</p>
+                            {% endif %}
+                            {% if phase.paid_at %}
+                                <p class="text-success"><strong>Paid:</strong> {{ phase.paid_at|date:"M d, Y" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escrow Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Escrow Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Escrow Amount:</strong></p>
+                            <h3 class="text-primary">${{ phase_escrow.amount|floatformat:2 }}</h3>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Escrow Status:</strong></p>
+                            <span class="badge 
+                                {% if phase_escrow.status == 'released' %}bg-success
+                                {% elif phase_escrow.status == 'active' %}bg-warning
+                                {% elif phase_escrow.status == 'refunded' %}bg-secondary
+                                {% else %}bg-danger{% endif %} fs-6">
+                                {{ phase_escrow.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Created:</strong> {{ phase_escrow.created_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                        {% if phase_escrow.released_at %}
+                        <div class="col-md-6">
+                            <p><strong>Released:</strong> {{ phase_escrow.released_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Parties Involved</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Employer</h6>
+                            <p><strong>Name:</strong> {{ phase_escrow.employer.get_full_name|default:phase_escrow.employer.username }}</p>
+                            <p><strong>Email:</strong> {{ phase_escrow.employer.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Freelancer</h6>
+                            <p><strong>Name:</strong> {{ phase_escrow.freelancer.get_full_name|default:phase_escrow.freelancer.username }}</p>
+                            <p><strong>Email:</strong> {{ phase_escrow.freelancer.email }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            {% if is_employer and phase_escrow.status == 'active' %}
+                {% if phase.can_be_paid %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-check-circle me-2"></i>Ready to Release Payment
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-success">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Phase Completed:</strong> The freelancer has completed the phase and requested payment.
+                                You can now release the escrow funds.
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'payments:phase_escrow_release' project.pk phase.pk %}" class="btn btn-success btn-lg">
+                                    <i class="fas fa-unlock me-2"></i>Release Payment
+                                </a>
+                                <a href="{% url 'payments:phase_escrow_refund' project.pk phase.pk %}" class="btn btn-outline-danger">
+                                    <i class="fas fa-undo me-2"></i>Refund Escrow
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">
+                                <i class="fas fa-clock me-2"></i>Waiting for Phase Completion
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Not Ready:</strong> The phase must be completed and payment must be requested before you can release funds.
+                            </div>
+                            <p><strong>Current Phase Status:</strong> {{ phase.get_status_display }}</p>
+                            {% if not phase.payment_requested %}
+                                <p class="text-muted">Freelancer has not requested payment yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% elif is_freelancer %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Payment Status</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if phase_escrow.status == 'released' %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Payment Released!</strong> The funds have been transferred to your wallet.
+                            </div>
+                        {% elif phase_escrow.status == 'active' %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Escrow Active:</strong> Funds are held in escrow. Waiting for employer to release payment.
+                            </div>
+                        {% else %}
+                            <div class="alert alert-secondary">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Escrow Status:</strong> {{ phase_escrow.get_status_display }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

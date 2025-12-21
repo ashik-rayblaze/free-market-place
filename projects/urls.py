@@ -13,5 +13,12 @@ urlpatterns = [
     path('category/<int:category_id>/', views.project_list_by_category, name='by_category'),
     # Also handle singular 'project' URLs
     path('project/create/', views.project_create, name='create_singular'),
+    # Phase management URLs
+    path('<int:project_id>/phases/', views.phase_list, name='phase_list'),
+    path('<int:project_id>/phases/create/', views.phase_create, name='phase_create'),
+    path('<int:project_id>/phases/<int:phase_id>/edit/', views.phase_edit, name='phase_edit'),
+    path('<int:project_id>/phases/<int:phase_id>/delete/', views.phase_delete, name='phase_delete'),
+    path('<int:project_id>/phases/<int:phase_id>/start/', views.phase_start, name='phase_start'),
+    path('<int:project_id>/phases/<int:phase_id>/complete/', views.phase_complete, name='phase_complete'),
 ]
 

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Refund Escrow - {{ phase.name }} - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-undo me-2"></i>Refund Escrow
+                    </h4>
+                    <p class="mb-0 text-white-50">{{ project.title }} - {{ phase.name }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Refund Escrow:</strong> This will return the escrow funds back to your wallet.
+                    </div>
+                    
+                    <!-- Phase Summary -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ phase.name }}</h6>
+                            <p class="text-muted mb-3">{{ phase.description|truncatewords:30 }}</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Escrow Amount:</strong></p>
+                                    <h4 class="text-danger">${{ phase_escrow.amount|floatformat:2 }}</h4>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Status:</strong> {{ phase_escrow.get_status_display }}</p>
+                                    <p><strong>Created:</strong> {{ phase_escrow.created_at|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Refund Information -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>What happens when you refund?</h6>
+                        <ul class="mb-0">
+                            <li>Escrow funds will be returned to your wallet</li>
+                            <li>Escrow status will change to "Refunded"</li>
+                            <li>Phase status will remain unchanged</li>
+                            <li>You can create a new escrow later if needed</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="confirmation" class="form-label">
+                                <strong>Type "REFUND" to confirm</strong>
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="confirmation" name="confirmation" 
+                                   placeholder="REFUND" required autocomplete="off">
+                            <small class="form-text text-muted">This confirms you want to refund the escrow</small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'payments:phase_escrow_detail' project.pk phase.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg" id="refundBtn" disabled>
+                                <i class="fas fa-undo me-1"></i>Refund ${{ phase_escrow.amount|floatformat:2 }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmationInput = document.getElementById('confirmation');
+    const refundBtn = document.getElementById('refundBtn');
+    
+    confirmationInput.addEventListener('input', function() {
+        if (this.value.trim().toUpperCase() === 'REFUND') {
+            refundBtn.disabled = false;
+        } else {
+            refundBtn.disabled = true;
+        }
+    });
+});
+</script>
+{% endblock %}
+

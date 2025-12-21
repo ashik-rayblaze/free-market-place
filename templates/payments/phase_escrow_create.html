@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Escrow - {{ phase.name }} - FreelancerHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-lock me-2"></i>Create Escrow for Phase
+                    </h4>
+                    <p class="mb-0 text-white-50">{{ project.title }} - {{ phase.name }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>What is Escrow?</strong> Escrow holds funds securely until the phase work is completed and approved. 
+                        You can release payment when satisfied, or refund if needed.
+                    </div>
+                    
+                    <!-- Phase Summary -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Phase Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ phase.name }}</h6>
+                            <p class="text-muted mb-3">{{ phase.description|truncatewords:30 }}</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Phase Amount:</strong></p>
+                                    <h4 class="text-primary">${{ phase.amount|floatformat:2 }}</h4>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Status:</strong></p>
+                                    <span class="badge 
+                                        {% if phase.status == 'completed' %}bg-warning
+                                        {% elif phase.status == 'in_progress' %}bg-primary
+                                        {% else %}bg-secondary{% endif %} fs-6">
+                                        {{ phase.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wallet Information -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Your Wallet Balance</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Current Balance:</strong></p>
+                                    <h4 class="{% if employer_wallet.balance >= phase.amount %}text-success{% else %}text-danger{% endif %}">
+                                        ${{ employer_wallet.balance|floatformat:2 }}
+                                    </h4>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>After Escrow:</strong></p>
+                                    <h4 class="{% if balance_after >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        ${{ balance_after|floatformat:2 }}
+                                    </h4>
+                                </div>
+                            </div>
+                            
+                            {% if employer_wallet.balance < phase.amount %}
+                                <div class="alert alert-danger mt-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Insufficient Funds!</strong> You need ${{ phase.amount|floatformat:2 }} but only have ${{ employer_wallet.balance|floatformat:2 }}.
+                                    <a href="{% url 'payments:add_funds' %}" class="alert-link">Add funds to your wallet</a> first.
+                                </div>
+                            {% else %}
+                                <div class="alert alert-success mt-3">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <strong>Sufficient Funds:</strong> You have enough balance to create escrow for this phase.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Important Information -->
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Important Information</h6>
+                        <ul class="mb-0">
+                            <li>Funds will be deducted from your wallet immediately</li>
+                            <li>Funds will be held in escrow until you release payment</li>
+                            <li>You can release payment after reviewing completed work</li>
+                            <li>You can refund escrow back to your wallet if needed</li>
+                            <li>Funds are secure and protected in escrow</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if employer_wallet.balance >= phase.amount %}
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'projects:phase_list' project.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-lock me-1"></i>Create Escrow (${{ phase.amount|floatformat:2 }})
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'projects:phase_list' project.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Cancel
+                                </a>
+                                <a href="{% url 'payments:add_funds' %}" class="btn btn-primary">
+                                    <i class="fas fa-wallet me-1"></i>Add Funds to Wallet
+                                </a>
+                            </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

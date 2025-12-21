@@ -6,8 +6,8 @@ from django.db.models import Q, Sum
 from django.http import JsonResponse
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
-from .models import PaymentMethod, Wallet, Transaction, Escrow
-from projects.models import Project
+from .models import PaymentMethod, Wallet, Transaction, Escrow, PhaseEscrow
+from projects.models import Project, ProjectPhase
 from bids.models import Bid
 from accounts.decorators import owner_required
 
@@ -422,4 +422,217 @@ def refund_escrow(request, project_id):
         'escrow': escrow,
     }
     return render(request, 'payments/refund_escrow.html', context)
+
+
+# ==================== Phase Payment Views ====================
+
+@login_required
+def phase_payment_request(request, project_id, phase_id):
+    """Request payment for a completed phase (freelancer action)."""
+    project = get_object_or_404(Project, pk=project_id)
+    phase = get_object_or_404(ProjectPhase, pk=phase_id, project=project)
+    
+    # Check if user is the freelancer assigned to this project
+    accepted_bid = project.bids.filter(status='accepted').first()
+    if not accepted_bid or accepted_bid.freelancer != request.user:
+        messages.error(request, 'You do not have permission to request payment for this phase.')
+        return redirect('projects:phase_list', project_id=project_id)
+    
+    if phase.request_payment():
+        messages.success(request, f'Payment requested for phase "{phase.name}". Waiting for employer approval.')
+    else:
+        messages.error(request, 'Cannot request payment. Phase must be completed first.')
+    
+    return redirect('projects:phase_list', project_id=project_id)
+
+
+@login_required
+def phase_escrow_create(request, project_id, phase_id):
+    """Create escrow for a phase (employer action - funds are held)."""
+    project = get_object_or_404(Project, pk=project_id)
+    phase = get_object_or_404(ProjectPhase, pk=phase_id, project=project)
+    
+    if project.employer != request.user:
+        messages.error(request, 'Only the employer can create escrow for phases.')
+        return redirect('projects:phase_list', project_id=project_id)
+    
+    # Check if escrow already exists
+    if hasattr(phase, 'escrow'):
+        messages.info(request, 'Escrow already exists for this phase.')
+        return redirect('payments:phase_escrow_detail', project_id=project_id, phase_id=phase_id)
+    
+    # Get accepted bid to find freelancer
+    accepted_bid = project.bids.filter(status='accepted').first()
+    if not accepted_bid:
+        messages.error(request, 'No accepted bid found for this project.')
+        return redirect('projects:phase_list', project_id=project_id)
+    
+    # Check if employer has sufficient funds
+    employer_wallet, created = Wallet.objects.get_or_create(user=request.user)
+    if employer_wallet.balance < phase.amount:
+        messages.error(request, f'Insufficient funds. You need ${phase.amount} but only have ${employer_wallet.balance}.')
+        return redirect('payments:add_funds')
+    
+    if request.method == 'POST':
+        try:
+            # Deduct funds from employer wallet
+            if not employer_wallet.deduct_funds(phase.amount):
+                messages.error(request, 'Failed to deduct funds from wallet.')
+                return redirect('payments:add_funds')
+            
+            # Create phase escrow
+            phase_escrow = PhaseEscrow.objects.create(
+                phase=phase,
+                project=project,
+                employer=request.user,
+                freelancer=accepted_bid.freelancer,
+                amount=phase.amount,
+                status='active'
+            )
+            
+            # Create transaction record
+            Transaction.objects.create(
+                user=request.user,
+                transaction_type='payment',
+                amount=phase.amount,
+                status='completed',
+                project=project,
+                phase=phase,
+                description=f"Escrow deposit for phase: {phase.name} - {project.title}",
+                completed_at=timezone.now()
+            )
+            
+            messages.success(request, f'Escrow created successfully for phase "{phase.name}". Funds are now held in escrow.')
+            return redirect('payments:phase_escrow_detail', project_id=project_id, phase_id=phase_id)
+        except Exception as e:
+            messages.error(request, f'Error creating escrow: {str(e)}')
+            # Refund if escrow creation failed
+            employer_wallet.add_funds(phase.amount)
+    
+    # Calculate balance after escrow
+    balance_after = employer_wallet.balance - phase.amount
+    
+    context = {
+        'project': project,
+        'phase': phase,
+        'employer_wallet': employer_wallet,
+        'balance_after': balance_after,
+    }
+    return render(request, 'payments/phase_escrow_create.html', context)
+
+
+@login_required
+def phase_escrow_detail(request, project_id, phase_id):
+    """View escrow details for a phase."""
+    project = get_object_or_404(Project, pk=project_id)
+    phase = get_object_or_404(ProjectPhase, pk=phase_id, project=project)
+    
+    # Check permissions
+    accepted_bid = project.bids.filter(status='accepted').first()
+    if not accepted_bid:
+        messages.error(request, 'No accepted bid found for this project.')
+        return redirect('projects:detail', pk=project_id)
+    
+    if request.user != project.employer and request.user != accepted_bid.freelancer:
+        messages.error(request, 'You do not have permission to view this escrow.')
+        return redirect('projects:detail', pk=project_id)
+    
+    # Check if escrow exists
+    try:
+        phase_escrow = PhaseEscrow.objects.get(phase=phase)
+    except PhaseEscrow.DoesNotExist:
+        # Escrow doesn't exist yet - redirect to create escrow if employer
+        if request.user == project.employer:
+            messages.info(request, 'Escrow not created yet. Please create escrow first.')
+            return redirect('payments:phase_escrow_create', project_id=project_id, phase_id=phase_id)
+        else:
+            messages.info(request, 'Escrow has not been created yet. Waiting for employer to create escrow.')
+            return redirect('projects:phase_list', project_id=project_id)
+    
+    context = {
+        'project': project,
+        'phase': phase,
+        'phase_escrow': phase_escrow,
+        'is_employer': request.user == project.employer,
+        'is_freelancer': request.user == accepted_bid.freelancer,
+    }
+    return render(request, 'payments/phase_escrow_detail.html', context)
+
+
+@login_required
+def phase_escrow_release(request, project_id, phase_id):
+    """Release escrow funds for a phase (employer action)."""
+    project = get_object_or_404(Project, pk=project_id)
+    phase = get_object_or_404(ProjectPhase, pk=phase_id, project=project)
+    
+    if project.employer != request.user:
+        messages.error(request, 'Only the employer can release escrow funds.')
+        return redirect('payments:phase_escrow_detail', project_id=project_id, phase_id=phase_id)
+    
+    phase_escrow = get_object_or_404(PhaseEscrow, phase=phase, status='active')
+    
+    if request.method == 'POST':
+        confirmation = request.POST.get('confirmation', '').strip()
+        if confirmation != 'RELEASE':
+            messages.error(request, 'Please type "RELEASE" to confirm.')
+            return render(request, 'payments/phase_escrow_release.html', {
+                'project': project,
+                'phase': phase,
+                'phase_escrow': phase_escrow,
+            })
+        
+        try:
+            if phase_escrow.release_funds():
+                messages.success(request, f'Escrow funds released successfully for phase "{phase.name}"!')
+                return redirect('payments:phase_escrow_detail', project_id=project_id, phase_id=phase_id)
+            else:
+                messages.error(request, 'Cannot release funds. Phase must be completed and payment must be requested.')
+        except Exception as e:
+            messages.error(request, f'Error releasing escrow: {str(e)}')
+    
+    context = {
+        'project': project,
+        'phase': phase,
+        'phase_escrow': phase_escrow,
+    }
+    return render(request, 'payments/phase_escrow_release.html', context)
+
+
+@login_required
+def phase_escrow_refund(request, project_id, phase_id):
+    """Refund escrow funds for a phase (employer action)."""
+    project = get_object_or_404(Project, pk=project_id)
+    phase = get_object_or_404(ProjectPhase, pk=phase_id, project=project)
+    
+    if project.employer != request.user:
+        messages.error(request, 'Only the employer can refund escrow funds.')
+        return redirect('payments:phase_escrow_detail', project_id=project_id, phase_id=phase_id)
+    
+    phase_escrow = get_object_or_404(PhaseEscrow, phase=phase, status='active')
+    
+    if request.method == 'POST':
+        confirmation = request.POST.get('confirmation', '').strip()
+        if confirmation != 'REFUND':
+            messages.error(request, 'Please type "REFUND" to confirm.')
+            return render(request, 'payments/phase_escrow_refund.html', {
+                'project': project,
+                'phase': phase,
+                'phase_escrow': phase_escrow,
+            })
+        
+        try:
+            if phase_escrow.refund_funds():
+                messages.success(request, f'Escrow funds refunded successfully for phase "{phase.name}"!')
+                return redirect('payments:phase_escrow_detail', project_id=project_id, phase_id=phase_id)
+            else:
+                messages.error(request, 'Cannot refund funds. Escrow must be active.')
+        except Exception as e:
+            messages.error(request, f'Error refunding escrow: {str(e)}')
+    
+    context = {
+        'project': project,
+        'phase': phase,
+        'phase_escrow': phase_escrow,
+    }
+    return render(request, 'payments/phase_escrow_refund.html', context)
 

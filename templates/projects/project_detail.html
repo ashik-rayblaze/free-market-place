@@ -269,6 +269,9 @@
                 </div>
                 <div class="card-body">
                     {% if user == project.employer %}
+                        <a href="{% url 'projects:phase_list' project.pk %}" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-tasks me-2"></i>Manage Phases
+                        </a>
                         <a href="{% url 'projects:edit' project.pk %}" class="btn btn-outline-primary w-100 mb-2">
                             <i class="fas fa-edit me-2"></i>Edit Project
                         </a>
@@ -276,6 +279,11 @@
                             <i class="fas fa-trash me-2"></i>Delete Project
                         </a>
                     {% elif user.role == 'freelancer' %}
+                        {% if accepted_bid %}
+                            <a href="{% url 'projects:phase_list' project.pk %}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-tasks me-2"></i>View Phases
+                            </a>
+                        {% endif %}
                         {% if user_bid %}
                             <a href="{% url 'bids:detail' user_bid.pk %}" class="btn btn-primary w-100 mb-2">
                                 <i class="fas fa-eye me-2"></i>View My Bid
