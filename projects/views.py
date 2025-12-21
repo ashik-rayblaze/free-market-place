@@ -147,6 +147,7 @@ def project_create(request):
             
             # Parse deadline
             from django.utils.dateparse import parse_datetime
+            from django.utils import timezone
             deadline_datetime = parse_datetime(deadline)
             if not deadline_datetime:
                 messages.error(request, 'Invalid deadline format. Please use the date picker.')
@@ -156,8 +157,11 @@ def project_create(request):
                     'form_data': request.POST
                 })
             
+            # Make datetime timezone-aware if it's naive
+            if timezone.is_naive(deadline_datetime):
+                deadline_datetime = timezone.make_aware(deadline_datetime)
+            
             # Check if deadline is in the past
-            from django.utils import timezone
             if deadline_datetime < timezone.now():
                 messages.error(request, 'Deadline cannot be in the past.')
                 categories = Category.objects.all()
@@ -228,7 +232,27 @@ def project_edit(request, pk):
         project.budget_type = request.POST.get('budget_type')
         project.budget_min = request.POST.get('budget_min')
         project.budget_max = request.POST.get('budget_max')
-        project.deadline = request.POST.get('deadline')
+        
+        # Parse and handle deadline datetime
+        from django.utils.dateparse import parse_datetime
+        from django.utils import timezone
+        deadline_str = request.POST.get('deadline')
+        if deadline_str:
+            deadline_datetime = parse_datetime(deadline_str)
+            if deadline_datetime:
+                # Make datetime timezone-aware if it's naive
+                if timezone.is_naive(deadline_datetime):
+                    deadline_datetime = timezone.make_aware(deadline_datetime)
+                project.deadline = deadline_datetime
+            else:
+                messages.error(request, 'Invalid deadline format. Please use the date picker.')
+                categories = Category.objects.all()
+                context = {
+                    'project': project,
+                    'categories': categories,
+                }
+                return render(request, 'projects/project_edit.html', context)
+        
         project.skills_required = request.POST.get('skills_required')
         project.experience_level = request.POST.get('experience_level')
         
