@@ -117,8 +117,7 @@ def register(request):
             # Create profile
             Profile.objects.create(user=user)
             
-            # Create wallet
-            Wallet.objects.create(user=user)
+            # Wallet is automatically created by signal in payments.signals
         
         messages.success(request, 'Account created successfully! Please log in.')
         return redirect('accounts:login')
