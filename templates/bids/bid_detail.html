@@ -97,7 +97,9 @@
                             <h5 class="mb-0">Project Information</h5>
                         </div>
                         <div class="card-body">
-                            <p><strong>Budget:</strong> ${{ bid.project.budget|floatformat:2 }}</p>
+                            <p><strong>Budget:</strong> ${{ bid.project.budget_min|floatformat:2 }}{% if bid.project.budget_max != bid.project.budget_min %} - ${{ bid.project.budget_max|floatformat:2 }}{% endif %}
+                                <br><small class="text-muted">{{ bid.project.budget_type|title }}</small>
+                            </p>
                             <p><strong>Category:</strong> {{ bid.project.category.name }}</p>
                             <p><strong>Status:</strong> {{ bid.project.status|title }}</p>
                             <p><strong>Posted:</strong> {{ bid.project.created_at|date:"M d, Y" }}</p>
